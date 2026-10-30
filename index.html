@@ -2246,12 +2246,19 @@ if ((S.settings.focusVer || 1) < (BOOK.focusVer || 1)) { S.settings.focusVer = B
 // Kann dieser Browser hier dauerhaft speichern? (Nicht z. B. in Vorschau-Fenstern, InPrivate oder mit blockiertem Speicher)
 let STORAGE_OK = (() => { try { const k = '__euli_test'; localStorage.setItem(k, '1'); const ok = localStorage.getItem(k) === '1'; localStorage.removeItem(k); return ok; } catch (e) { return false; } })();
 const save = () => {
+  S.mod = Date.now();
+  const ps = JSON.stringify([S.profile, S.settings]); if (ps !== save.ps) { if (save.ps !== undefined) S.setMod = S.mod; save.ps = ps; }
+  syncSoon(); return persist();
+};
+const persist = () => {
+  save.ps = JSON.stringify([S.profile, S.settings]);
   if (SAVE_HANDLE) { clearTimeout(save.t); save.t = setTimeout(writeSaveFile, 300); }
   idbSave();
   try { localStorage.setItem(KEY, JSON.stringify(S)); if (localStorage.getItem(KEY) === null) throw new Error('nicht gespeichert'); return true; }
   catch (e) { if (STORAGE_OK) { STORAGE_OK = false; storageBanner(); } return !!SAVE_HANDLE; }
 };
 
+save.ps = JSON.stringify([S.profile, S.settings]);
 /* ---------- Zweite Sicherung in IndexedDB (falls localStorage geleert wird) ---------- */
 const idb = () => new Promise((res, rej) => { const r = indexedDB.open('euli', 1); r.onupgradeneeded = () => r.result.createObjectStore('state'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 function idbSave() { try { idb().then(db => { db.transaction('state', 'readwrite').objectStore('state').put(JSON.stringify(S), KEY); }).catch(() => { }); } catch (e) { } }
@@ -2277,7 +2284,102 @@ const FS_API = 'showSaveFilePicker' in window && 'showOpenFilePicker' in window;
 const FILE_TYPES = [{ description: 'Euli-Spielstand', accept: { 'application/json': ['.json'] } }];
 function applyLoaded(txt) {
   const s = JSON.parse(txt); if (!s || !s.topics) throw new Error('Das ist keine Euli-Spielstand-Datei.');
-  S = Object.assign(defState(), s, { settings: Object.assign(defState().settings, s.settings) });
+  S = mergeStates(S, s);
+}
+
+/* ---------- Zwei Spielstände zusammenführen (Handy + Laptop): nichts geht verloren ---------- */
+const norm = s => Object.assign(defState(), s, { settings: Object.assign(defState().settings, s.settings) });
+const canon = o => JSON.stringify(o, (k, v) => v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((r, x) => (r[x] = v[x], r), {}) : v);
+function mergeStates(a, b) {
+  a = norm(JSON.parse(JSON.stringify(a))); b = norm(JSON.parse(JSON.stringify(b)));
+  if (!a.profile && b.profile) return Object.assign(b, { sync: b.sync || a.sync });
+  if (!b.profile) return a;
+  const [n, o] = (a.mod || 0) >= (b.mod || 0) ? [a, b] : [b, a], m = n;
+  if ((o.setMod || 0) > (n.setMod || 0)) { m.profile = o.profile; m.settings = o.settings; m.setMod = o.setMod; }
+  m.mod = Math.max(a.mod || 0, b.mod || 0);
+  ['xp', 'total', 'fixed', 'perfect', 'lessons'].forEach(k => m[k] = Math.max(a[k] || 0, b[k] || 0));
+  for (const [id, t] of Object.entries(o.topics)) {
+    const x = m.topics[id];
+    if (!x || (t.seen || 0) > (x.seen || 0)) m.topics[id] = Object.assign({}, t, { lesson: t.lesson || !!(x && x.lesson) });
+    else if (t.lesson) x.lesson = true;
+  }
+  for (const [k, d] of Object.entries(o.days)) {
+    const x = m.days[k]; if (!x) { m.days[k] = d; continue; }
+    ['n', 'ok', 'ok1', 'sec'].forEach(f => x[f] = Math.max(x[f] || 0, d[f] || 0)); x.goal = !!(x.goal || d.goal);
+  }
+  m.badges = [...new Set([...a.badges, ...b.badges])];
+  m.notes = Object.assign({}, o.notes, n.notes);
+  m.fixedMids = [...new Set([...(a.fixedMids || []), ...(b.fixedMids || [])])].slice(-300);
+  m.mClear = Math.max(a.mClear || 0, b.mClear || 0);
+  const seen = new Set(), done = new Set(m.fixedMids);
+  m.mistakes = [...a.mistakes, ...b.mistakes].filter(x => !seen.has(x.mid) && seen.add(x.mid) && !done.has(x.mid) && +String(x.mid).slice(0, 13) > m.mClear)
+    .sort((x, y) => String(x.mid).localeCompare(String(y.mid))).slice(-40);
+  m.sync = n.sync || o.sync;
+  return m;
+}
+
+/* ---------- Abgleich Handy ⇄ Laptop über einen Familien-Code (Firebase Firestore) ---------- */
+const SYNC_CFG = { apiKey: '', projectId: '' };
+const SYNC_ON = () => !!(SYNC_CFG.apiKey && SYNC_CFG.projectId);
+const SYNC_URL = code => `https://firestore.googleapis.com/v1/projects/${SYNC_CFG.projectId}/databases/(default)/documents/families/${code}?key=${SYNC_CFG.apiKey}`;
+let SYNC_STATE = { busy: false, last: null, err: null, again: false };
+const fmtCode = c => c.replace(/(.{4})(?=.)/g, '$1-');
+const cleanCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^EULI/, '');
+function newCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', r = crypto.getRandomValues(new Uint8Array(20)); return [...r].map(x => A[x % 32]).join(''); }
+async function syncGet(code) {
+  const r = await fetch(SYNC_URL(code));
+  if (r.status === 404) return null; if (!r.ok) throw new Error('Server antwortet nicht (' + r.status + ')');
+  const j = await r.json(); return JSON.parse(j.fields.data.stringValue);
+}
+async function syncPut(code, st) {
+  const r = await fetch(SYNC_URL(code), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(st) }, updated: { integerValue: String(Date.now()) } } }) });
+  if (!r.ok) throw new Error('Speichern online fehlgeschlagen (' + r.status + ')');
+}
+function syncSoon(ms = 2500) { if (!SYNC_ON() || !S.sync) return; clearTimeout(syncSoon.t); syncSoon.t = setTimeout(syncNow, ms); }
+async function syncNow() {
+  if (!SYNC_ON() || !S.sync || !navigator.onLine) return;
+  if (SYNC_STATE.busy) { SYNC_STATE.again = true; return; }
+  SYNC_STATE.busy = true; const code = S.sync.code;
+  try {
+    const remote = await syncGet(code);
+    const merged = remote ? mergeStates(S, remote) : S;
+    if (canon(merged) !== canon(S)) {
+      const before = S.profile; S = merged; persist(); header();
+      if (['home', 'topics', 'badges'].includes(VIEW) || (!before && S.profile)) go(VIEW === 'onboarding' ? 'home' : VIEW);
+    }
+    if (!remote || canon(merged) !== canon(remote)) await syncPut(code, S);
+    SYNC_STATE.last = new Date(); SYNC_STATE.err = null;
+  } catch (e) { SYNC_STATE.err = e.message; }
+  SYNC_STATE.busy = false;
+  if (SYNC_STATE.again) { SYNC_STATE.again = false; syncNow(); }
+}
+async function syncCreate() {
+  S.sync = { code: newCode() }; save(); await syncNow();
+  if (SYNC_STATE.err) toast('⚠️ ' + esc(SYNC_STATE.err)); else toast('✅ Familien-Code erstellt. Jetzt am anderen Gerät eingeben.', 4500);
+  if (VIEW === 'parents') VIEWS.parents();
+}
+async function syncJoin(raw) {
+  const code = cleanCode(raw); if (code.length !== 20) return toast('Der Code hat 20 Zeichen – bitte nochmal prüfen.');
+  try {
+    const remote = await syncGet(code); if (!remote) return toast('Diesen Familien-Code gibt es nicht – bitte nochmal prüfen.');
+    S = mergeStates(S, remote); S.sync = { code }; save(); await syncNow();
+    toast(`✅ Verbunden! ${S.profile ? `Hallo ${esc(S.profile.name)} – ` : ''}Handy und Laptop haben jetzt denselben Stand.`, 4500);
+    go(VIEW === 'parents' ? 'parents' : 'home');
+  } catch (e) { toast('⚠️ Verbinden hat nicht geklappt: ' + esc(e.message)); }
+}
+const askCode = () => { const c = prompt('Familien-Code eingeben (steht im Elternbereich am anderen Gerät):'); if (c) syncJoin(c); };
+function syncCard() {
+  if (!SYNC_ON()) return '';
+  const link = `https://benkoiana.github.io/euli/#code=${S.sync ? S.sync.code : ''}`;
+  return `<h2>☁️ Handy & Laptop verbinden</h2><div class="card">${S.sync ? `
+    <p style="margin-top:0">✅ <b>Verbunden.</b> Der Fortschritt wird automatisch zwischen allen Geräten mit diesem Code abgeglichen.</p>
+    <p>Familien-Code: <b style="font-size:22px;letter-spacing:1px;font-family:monospace">${fmtCode(S.sync.code)}</b></p>
+    <p class="small">Am anderen Gerät: Euli öffnen → <b>Für Eltern</b> → <b>„Code eingeben“</b> (oder auf der Namensseite „🔗 Familien-Code eingeben“). Oder diesen Link aufs Handy schicken und dort öffnen:<br><code style="word-break:break-all">${link}</code></p>
+    <div class="row"><button class="btn" onclick="navigator.clipboard?.writeText('${link}').then(()=>toast('Link kopiert ✅'))">📋 Link kopieren</button><button class="btn ghost" onclick="syncNow().then(()=>VIEWS.parents())">🔄 Jetzt abgleichen</button></div>
+    <p class="small muted" style="margin-bottom:0">${SYNC_STATE.err ? '⚠️ Letzter Abgleich fehlgeschlagen: ' + esc(SYNC_STATE.err) + ' (ohne Internet wird später abgeglichen)' : SYNC_STATE.last ? 'Zuletzt abgeglichen: ' + SYNC_STATE.last.toLocaleTimeString('de-AT') : 'Abgleich läuft beim Öffnen und nach jeder Aufgabe.'} · Den Code bitte nicht weitergeben – wer ihn kennt, sieht den Lernstand.</p>`
+    : `<p style="margin-top:0">Damit Handy und Laptop <b>denselben Fortschritt</b> zeigen: an einem Gerät einen Familien-Code erstellen, am anderen denselben Code eingeben. Danach geht alles automatisch.</p>
+    <div class="row"><button class="btn primary" onclick="syncCreate()">✨ Familien-Code erstellen</button><button class="btn" onclick="askCode()">🔗 Code eingeben</button></div>
+    <p class="small muted" style="margin-bottom:0">Tipp: Den Code auf dem Gerät erstellen, auf dem schon am meisten geübt wurde. Beim Verbinden werden beide Stände zusammengeführt – es geht nichts verloren.</p>`}</div>`;
 }
 async function writeSaveFile() {
   if (!SAVE_HANDLE) return;
@@ -2551,7 +2653,7 @@ function record(t, r) {
     const m = Object.assign({}, t, { mid: Date.now() + '' + rnd(0, 999), date: today(), fromMistake: true });
     S.mistakes.push(m); if (S.mistakes.length > 40) S.mistakes.shift();
   }
-  if (r.ok && t.fromMistake) { S.mistakes = S.mistakes.filter(m => m.mid !== t.mid); S.fixed++; }
+  if (r.ok && t.fromMistake) { S.mistakes = S.mistakes.filter(m => m.mid !== t.mid); S.fixedMids = [...(S.fixedMids || []), t.mid].slice(-300); S.fixed++; }
   if (!d.goal && d.n >= S.settings.goal) { d.goal = true; S.xp += 20; setTimeout(() => { toast('🎯 Tagesziel geschafft! <b>+20 XP</b>', 3500); confetti(); sndWin(); }, 400); }
   const before = lvl().l; save();
   if (lvl().l > before) setTimeout(() => { toast(`🎉 Level ${lvl().l}: <b>${lvl().title}</b>!`, 3500); confetti(200); sndWin(); }, 900);
@@ -2636,7 +2738,7 @@ const VIEWS = {
       <h3>Wie heißt du?</h3><input class="name-in" id="nm" maxlength="20" placeholder="Dein Name" value="${edit ? esc(S.profile.name) : ''}">
       <h3 style="margin-top:18px">Such dir ein Tier aus:</h3><div class="avatars">${AVATARS.map(a => `<button data-av="${a}" class="${a === av ? 'on' : ''}">${a}</button>`).join('')}</div>
       <button class="btn primary big" id="go">Los geht's! 🚀</button>
-      ${edit ? '' : `<p style="margin-top:22px" class="small muted">Du hast schon mit Euli geübt und dein Fortschritt ist weg?</p><button class="btn ghost" onclick="pickSaveUpload()">📂 Spielstand laden</button>`}</div>`;
+      ${edit ? '' : `<p style="margin-top:22px" class="small muted">Du hast schon mit Euli geübt und dein Fortschritt ist weg?</p><div class="row" style="justify-content:center">${SYNC_ON() ? '<button class="btn" onclick="askCode()">🔗 Familien-Code eingeben</button>' : ''}<button class="btn ghost" onclick="pickSaveUpload()">📂 Spielstand laden</button></div>`}</div>`;
     $$('[data-av]').forEach(b => b.onclick = () => { $$('[data-av]').forEach(x => x.classList.remove('on')); b.classList.add('on'); av = b.dataset.av; });
     const start = () => { const n = $('#nm').value.trim(); if (!n) { $('#nm').focus(); return toast('Wie heißt du? 🙂'); } S.profile = { name: n, avatar: av, since: S.profile?.since || today() };
       const ok = save() && (() => { try { return (JSON.parse(localStorage.getItem(KEY)) || {}).profile?.name === n; } catch (e) { return false; } })();
@@ -2776,6 +2878,7 @@ const VIEWS = {
       <div class="grid g3"><div class="card center"><div class="stat">${last7}/7</div><div class="small muted">Übungstage letzte Woche</div></div><div class="card center"><div class="stat">${tot}</div><div class="small muted">Aufgaben gesamt</div></div>
         <div class="card center"><div class="stat">${tot ? Math.round(ok1 / tot * 100) : 0}%</div><div class="small muted">beim 1. Versuch richtig</div></div><div class="card center"><div class="stat">${act.length ? Math.round(sec / 60 / act.length) : 0} min</div><div class="small muted">Ø Lernzeit pro Übungstag</div></div>
         <div class="card center"><div class="stat">${S.lessons}</div><div class="small muted">Erklärungen durchgearbeitet</div></div><div class="card center"><div class="stat">${S.mistakes.length}</div><div class="small muted">offene Fehler in der Kiste</div></div></div>
+      ${syncCard()}
       <h2>📅 Letzte 4 Wochen</h2><div class="card"><div class="cal">${days.map(([k, d, dt]) => `<i title="${dt.toLocaleDateString('de-AT')}: ${d ? d.n : 0} Aufgaben" style="background:${!d || !d.n ? '#ece4f5' : d.goal ? '#16a34a' : '#86efac'}">${dt.getDate()}</i>`).join('')}</div><p class="small muted">Dunkelgrün = Tagesziel erreicht · Hellgrün = geübt</p></div>
       <h2>📈 Stand pro Thema</h2><div class="card" style="overflow-x:auto"><table class="ptbl"><tr><th>Thema</th><th>Können</th><th>Stufe</th><th>Aufgaben</th><th>richtig</th><th>offene Fehler</th><th>zuletzt</th></tr>
         ${TOPICS.map(t => { const s = tp(t.id); return `<tr><td>${t.icon} ${t.title}${s.lesson ? ' 📖' : ''}</td><td style="min-width:110px"><div class="mbar"><i style="width:${s.m}%"></i></div><span class="small">${s.m}%</span></td><td>${levelOf(t.id)}</td><td>${s.seen}</td><td>${s.seen ? Math.round(s.ok / s.seen * 100) + '%' : '–'}</td><td>${mByTopic[t.id] || ''}</td><td class="small">${s.last ? new Date(s.last).toLocaleDateString('de-AT') : '–'}</td></tr>`; }).join('')}</table>
@@ -2821,8 +2924,8 @@ const VIEWS = {
     $('#snd').onchange = e => { S.settings.sound = e.target.checked; save(); };
     $('#voi').onchange = e => { S.settings.voice = e.target.checked; save(); };
     $('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' })); a.download = `mathe-euli-sicherung-${today()}.json`; a.click(); };
-    $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const s = JSON.parse(txt); if (!s.topics) throw 0; S = Object.assign(defState(), s); save(); toast('✅ Sicherung geladen'); VIEWS.parents(); } catch (err) { toast('Diese Datei ist keine gültige Sicherung.'); } }); };
-    $('#clrm').onclick = () => { if (confirm('Fehler-Kiste wirklich leeren?')) { S.mistakes = []; save(); VIEWS.parents(); } };
+    $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const s = JSON.parse(txt); if (!s.topics) throw 0; S = mergeStates(S, s); save(); toast('✅ Sicherung geladen und mit dem aktuellen Stand zusammengeführt'); VIEWS.parents(); } catch (err) { toast('Diese Datei ist keine gültige Sicherung.'); } }); };
+    $('#clrm').onclick = () => { if (confirm('Fehler-Kiste wirklich leeren?')) { S.mistakes = []; S.mClear = Date.now(); save(); VIEWS.parents(); } };
     $('#rst').onclick = () => { if (confirm('Wirklich ALLES löschen (Name, Fortschritt, Abzeichen)? Das kann nicht rückgängig gemacht werden.')) { S = defState(); save(); go('home'); } };
   },
 };
@@ -2854,7 +2957,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   const b = await idbLoad();
   if (b) { try { const s = JSON.parse(b); if (s.profile && (!S.profile || (s.total || 0) > (S.total || 0))) { applyLoaded(b); try { localStorage.setItem(KEY, b); } catch (e) { } go('home'); toast(`✅ Willkommen zurück, ${esc(S.profile.name)}! Dein Fortschritt ist wieder da.`, 4000); } } catch (e) { } }
   else if (S.profile) idbSave();
+  const hc = (location.hash.match(/code=([A-Za-z0-9-]+)/) || [])[1];
+  if (hc && SYNC_ON()) { history.replaceState(null, '', location.pathname); if (!S.sync || S.sync.code !== cleanCode(hc)) await syncJoin(hc); }
+  syncNow();
 });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); else if (S.sync) { clearTimeout(syncSoon.t); syncNow(); } });
+addEventListener('online', () => syncNow());
 </script>
 </body>
 </html>
