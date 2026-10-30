@@ -2327,7 +2327,7 @@ const fmtCode = c => c.replace(/(.{4})(?=.)/g, '$1-');
 const cleanCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^EULI/, '');
 function newCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', r = crypto.getRandomValues(new Uint8Array(20)); return [...r].map(x => A[x % 32]).join(''); }
 async function syncGet(code) {
-  const r = await fetch(SYNC_URL(code));
+  const r = await fetch(SYNC_URL(code), { cache: 'no-store' });
   if (r.status === 404) return null; if (!r.ok) throw new Error('Server antwortet nicht (' + r.status + ')');
   const j = await r.json(); return JSON.parse(j.fields.data.stringValue);
 }
