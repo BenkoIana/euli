@@ -2319,9 +2319,9 @@ function mergeStates(a, b) {
 }
 
 /* ---------- Abgleich Handy ⇄ Laptop über einen Familien-Code (Firebase Firestore) ---------- */
-const SYNC_CFG = { apiKey: '', projectId: '' };
-const SYNC_ON = () => !!(SYNC_CFG.apiKey && SYNC_CFG.projectId);
-const SYNC_URL = code => `https://firestore.googleapis.com/v1/projects/${SYNC_CFG.projectId}/databases/(default)/documents/families/${code}?key=${SYNC_CFG.apiKey}`;
+const SYNC_CFG = { apiKey: '', projectId: 'euli-d4b9e' };  // Firebase-Projekt der Familie; Zugriff über Firestore-Regeln geschützt
+const SYNC_ON = () => !!SYNC_CFG.projectId;
+const SYNC_URL = code => `https://firestore.googleapis.com/v1/projects/${SYNC_CFG.projectId}/databases/(default)/documents/families/${code}${SYNC_CFG.apiKey ? '?key=' + SYNC_CFG.apiKey : ''}`;
 let SYNC_STATE = { busy: false, last: null, err: null, again: false };
 const fmtCode = c => c.replace(/(.{4})(?=.)/g, '$1-');
 const cleanCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^EULI/, '');
