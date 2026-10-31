@@ -177,6 +177,8 @@ table.ptbl td,table.ptbl th{padding:7px 6px;border-bottom:1px solid var(--line);
   .xpbar,.hide-sm{display:none}
   .focus-list{columns:1}
 }
+
+.parents-btn{cursor:pointer;font:inherit;font-weight:800;border:2px solid var(--line);background:#fff}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7c4dff">
@@ -2222,7 +2224,7 @@ BOOK.examDefault = { date: '2026-11-13', name: '1. Schularbeit', topics: ['koerp
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '31.10.2026 07:52';
+const APP_VER = '31.10.2026 08:05';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2507,6 +2509,7 @@ function header() {
     <div class="pill" title="Tage hintereinander geübt">🔥 ${streak()}</div>
     <div class="pill" title="Heute gelöst / Tagesziel">🎯 ${d.n}/${S.settings.goal}</div>
     <div class="pill" title="Level ${L.l}: noch ${L.need} XP bis zum nächsten Level">⭐ Lv ${L.l}<span class="xpbar"><i style="width:${L.pct}%"></i></span></div>
+    <button class="pill parents-btn" onclick="go('parentsGate')" title="Elternbereich">👨‍👩‍👧<span class="hide-sm"> Eltern</span></button>
     ${S.profile ? `<button class="avatar-btn" onclick="go('badges')" title="Meine Erfolge">${S.profile.avatar}</button>` : ''}</div>`;
 }
 let VIEW = 'home';
@@ -2876,10 +2879,10 @@ const VIEWS = {
     const last7 = days.slice(-7).filter(([, d]) => d && d.n > 0).length;
     const mByTopic = {}; S.mistakes.forEach(m => mByTopic[m.topic] = (mByTopic[m.topic] || 0) + 1);
     app().innerHTML = `<div class="row" style="justify-content:space-between"><h1>👨‍👩‍👧 Elternbereich <span class="small muted" style="font-weight:400">Version ${APP_VER}</span></h1><button class="btn ghost" onclick="go('home')">Zurück zur App</button></div>
+      ${syncCard()}
       <div class="grid g3"><div class="card center"><div class="stat">${last7}/7</div><div class="small muted">Übungstage letzte Woche</div></div><div class="card center"><div class="stat">${tot}</div><div class="small muted">Aufgaben gesamt</div></div>
         <div class="card center"><div class="stat">${tot ? Math.round(ok1 / tot * 100) : 0}%</div><div class="small muted">beim 1. Versuch richtig</div></div><div class="card center"><div class="stat">${act.length ? Math.round(sec / 60 / act.length) : 0} min</div><div class="small muted">Ø Lernzeit pro Übungstag</div></div>
         <div class="card center"><div class="stat">${S.lessons}</div><div class="small muted">Erklärungen durchgearbeitet</div></div><div class="card center"><div class="stat">${S.mistakes.length}</div><div class="small muted">offene Fehler in der Kiste</div></div></div>
-      ${syncCard()}
       <h2>📅 Letzte 4 Wochen</h2><div class="card"><div class="cal">${days.map(([k, d, dt]) => `<i title="${dt.toLocaleDateString('de-AT')}: ${d ? d.n : 0} Aufgaben" style="background:${!d || !d.n ? '#ece4f5' : d.goal ? '#16a34a' : '#86efac'}">${dt.getDate()}</i>`).join('')}</div><p class="small muted">Dunkelgrün = Tagesziel erreicht · Hellgrün = geübt</p></div>
       <h2>📈 Stand pro Thema</h2><div class="card" style="overflow-x:auto"><table class="ptbl"><tr><th>Thema</th><th>Können</th><th>Stufe</th><th>Aufgaben</th><th>richtig</th><th>offene Fehler</th><th>zuletzt</th></tr>
         ${TOPICS.map(t => { const s = tp(t.id); return `<tr><td>${t.icon} ${t.title}${s.lesson ? ' 📖' : ''}</td><td style="min-width:110px"><div class="mbar"><i style="width:${s.m}%"></i></div><span class="small">${s.m}%</span></td><td>${levelOf(t.id)}</td><td>${s.seen}</td><td>${s.seen ? Math.round(s.ok / s.seen * 100) + '%' : '–'}</td><td>${mByTopic[t.id] || ''}</td><td class="small">${s.last ? new Date(s.last).toLocaleDateString('de-AT') : '–'}</td></tr>`; }).join('')}</table>
