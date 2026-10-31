@@ -2222,6 +2222,7 @@ BOOK.examDefault = { date: '2026-11-13', name: '1. Schularbeit', topics: ['koerp
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
+const APP_VER = '31.10.2026 07:52';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2874,7 +2875,7 @@ const VIEWS = {
     const act = Object.values(S.days).filter(d => d.n > 0), tot = act.reduce((a, d) => a + d.n, 0), ok1 = act.reduce((a, d) => a + (d.ok1 || 0), 0), sec = act.reduce((a, d) => a + d.sec, 0);
     const last7 = days.slice(-7).filter(([, d]) => d && d.n > 0).length;
     const mByTopic = {}; S.mistakes.forEach(m => mByTopic[m.topic] = (mByTopic[m.topic] || 0) + 1);
-    app().innerHTML = `<div class="row" style="justify-content:space-between"><h1>👨‍👩‍👧 Elternbereich</h1><button class="btn ghost" onclick="go('home')">Zurück zur App</button></div>
+    app().innerHTML = `<div class="row" style="justify-content:space-between"><h1>👨‍👩‍👧 Elternbereich <span class="small muted" style="font-weight:400">Version ${APP_VER}</span></h1><button class="btn ghost" onclick="go('home')">Zurück zur App</button></div>
       <div class="grid g3"><div class="card center"><div class="stat">${last7}/7</div><div class="small muted">Übungstage letzte Woche</div></div><div class="card center"><div class="stat">${tot}</div><div class="small muted">Aufgaben gesamt</div></div>
         <div class="card center"><div class="stat">${tot ? Math.round(ok1 / tot * 100) : 0}%</div><div class="small muted">beim 1. Versuch richtig</div></div><div class="card center"><div class="stat">${act.length ? Math.round(sec / 60 / act.length) : 0} min</div><div class="small muted">Ø Lernzeit pro Übungstag</div></div>
         <div class="card center"><div class="stat">${S.lessons}</div><div class="small muted">Erklärungen durchgearbeitet</div></div><div class="card center"><div class="stat">${S.mistakes.length}</div><div class="small muted">offene Fehler in der Kiste</div></div></div>
