@@ -2224,7 +2224,7 @@ BOOK.examDefault = { date: '2026-11-13', name: '1. Schularbeit', topics: ['koerp
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '31.10.2026 08:05';
+const APP_VER = '31.10.2026 08:08';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2868,7 +2868,7 @@ const VIEWS = {
   parentsGate() {
     const a = rnd(12, 19), b = rnd(12, 19);
     app().innerHTML = `<div class="card center" style="max-width:480px;margin:30px auto"><h1>👨‍👩‍👧 Elternbereich</h1><p>Bitte lösen, um fortzufahren:</p><p style="font-size:28px;font-weight:900">${a} · ${b} = ?</p><input class="ans" id="pg" inputmode="numeric"><div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" onclick="go('home')">Zurück</button><button class="btn primary" id="pgo">Öffnen</button></div></div>`;
-    const ok = () => +$('#pg').value === a * b ? VIEWS.parents() : (toast('Leider falsch.'), go('parentsGate'));
+    const ok = () => +$('#pg').value === a * b ? go('parents') : (toast('Leider falsch.'), go('parentsGate'));
     $('#pgo').onclick = ok; $('#pg').onkeydown = e => { if (e.key === 'Enter') ok(); }; $('#pg').focus();
   },
 
