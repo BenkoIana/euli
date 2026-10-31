@@ -179,6 +179,7 @@ table.ptbl td,table.ptbl th{padding:7px 6px;border-bottom:1px solid var(--line);
 }
 
 .parents-btn{cursor:pointer;font:inherit;font-weight:800;border:2px solid var(--line);background:#fff}
+@media (max-width:430px){.hide-xs{display:none}}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7c4dff">
@@ -2224,7 +2225,7 @@ BOOK.examDefault = { date: '2026-11-13', name: '1. Schularbeit', topics: ['koerp
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '31.10.2026 08:08';
+const APP_VER = '31.10.2026 08:10';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2376,8 +2377,8 @@ function syncCard() {
   const link = `https://benkoiana.github.io/euli/#code=${S.sync ? S.sync.code : ''}`;
   return `<h2>☁️ Handy & Laptop verbinden</h2><div class="card">${S.sync ? `
     <p style="margin-top:0">✅ <b>Verbunden.</b> Der Fortschritt wird automatisch zwischen allen Geräten mit diesem Code abgeglichen.</p>
-    <p>Familien-Code: <b style="font-size:22px;letter-spacing:1px;font-family:monospace">${fmtCode(S.sync.code)}</b></p>
-    <p class="small">Am anderen Gerät: Euli öffnen → <b>Für Eltern</b> → <b>„Code eingeben“</b> (oder auf der Namensseite „🔗 Familien-Code eingeben“). Oder diesen Link aufs Handy schicken und dort öffnen:<br><code style="word-break:break-all">${link}</code></p>
+    <p style="margin-bottom:4px">Familien-Code:</p><div style="font:800 clamp(14px,4.4vw,26px) monospace;white-space:nowrap;background:var(--pri-soft);border-radius:12px;padding:10px 6px;margin-bottom:12px;text-align:center;user-select:all">${fmtCode(S.sync.code)}</div>
+    <p class="small">Am anderen Gerät: Euli öffnen → oben rechts <b>👨‍👩‍👧</b> → <b>„Code eingeben“</b> (oder auf der Namensseite „🔗 Familien-Code eingeben“). Oder diesen Link aufs Handy schicken und dort öffnen:<br><code style="word-break:break-all">${link}</code></p>
     <div class="row"><button class="btn" onclick="navigator.clipboard?.writeText('${link}').then(()=>toast('Link kopiert ✅'))">📋 Link kopieren</button><button class="btn ghost" onclick="syncNow().then(()=>VIEWS.parents())">🔄 Jetzt abgleichen</button></div>
     <p class="small muted" style="margin-bottom:0">${SYNC_STATE.err ? '⚠️ Letzter Abgleich fehlgeschlagen: ' + esc(SYNC_STATE.err) + ' (ohne Internet wird später abgeglichen)' : SYNC_STATE.last ? 'Zuletzt abgeglichen: ' + SYNC_STATE.last.toLocaleTimeString('de-AT') : 'Abgleich läuft beim Öffnen und nach jeder Aufgabe.'} · Den Code bitte nicht weitergeben – wer ihn kennt, sieht den Lernstand.</p>`
     : `<p style="margin-top:0">Damit Handy und Laptop <b>denselben Fortschritt</b> zeigen: an einem Gerät einen Familien-Code erstellen, am anderen denselben Code eingeben. Danach geht alles automatisch.</p>
@@ -2506,7 +2507,7 @@ function header() {
   const L = lvl(), d = dayRec();
   $('#top').innerHTML = `<div class="top-in">
     <button class="brand" onclick="go('home')"><span class="owl">🦉</span><span class="hide-sm">Mathe mit Euli</span></button><div class="sp"></div>
-    <div class="pill" title="Tage hintereinander geübt">🔥 ${streak()}</div>
+    <div class="pill hide-xs" title="Tage hintereinander geübt">🔥 ${streak()}</div>
     <div class="pill" title="Heute gelöst / Tagesziel">🎯 ${d.n}/${S.settings.goal}</div>
     <div class="pill" title="Level ${L.l}: noch ${L.need} XP bis zum nächsten Level">⭐ Lv ${L.l}<span class="xpbar"><i style="width:${L.pct}%"></i></span></div>
     <button class="pill parents-btn" onclick="go('parentsGate')" title="Elternbereich">👨‍👩‍👧<span class="hide-sm"> Eltern</span></button>
