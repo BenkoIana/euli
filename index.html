@@ -180,6 +180,7 @@ table.ptbl td,table.ptbl th{padding:7px 6px;border-bottom:1px solid var(--line);
 
 .parents-btn{cursor:pointer;font:inherit;font-weight:800;border:2px solid var(--line);background:#fff}
 @media (max-width:430px){.hide-xs{display:none}}
+@media (max-width:380px){.top-in{gap:6px}.top-in .pill{padding:3px 8px;font-size:14px}}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7c4dff">
@@ -2221,11 +2222,147 @@ function vielfacheTask(a, k = 5) {
 
 /* 1. Schularbeit: Termin bekannt, Stoff noch nicht → vorläufig alles, was bisher im Heft steht */
 BOOK.examDefault = { date: '2026-11-13', name: '1. Schularbeit', topics: ['koerper', 'einheiten', 'teilbar', 'primzahlen', 'ggtkgv', 'ganz', 'ganzrech', 'winkel', 'parallelwinkel'] };
+
+/* ===== 1. Schularbeit 13.11.2026 – offizieller Stoff (Stoffliste der Lehrerin, 31.10.2026) =====
+   A Teilbarkeit (S. 18–37), B Ganze Zahlen (S. 40–49), H Winkel & Koordinatensystem (S. 178–186).
+   Ganze Zahlen: nur ganze Zahl ± natürliche Zahl, dazu Sachsituationen (Temperatur, Kontostand, Höhenmeter). */
+BOOK.examDefault = { date: '2026-11-13', name: '1. Schularbeit', topics: ['teilbar', 'primzahlen', 'ggtkgv', 'ganz', 'ganzrech', 'winkel', 'parallelwinkel', 'koordinaten'] };
+BOOK.examVer = 2;
+BOOK.defaultFocus = ['teilbar', 'primzahlen', 'ggtkgv', 'ganz', 'ganzrech', 'winkel', 'parallelwinkel', 'koordinaten'];
+BOOK.focusVer = 3;
+BOOK.boost = { teilbar: 1.8, ggtkgv: 1.5, ganzrech: 1.3, koordinaten: 1.3 };
+
+{ // Teilbarkeitsregeln für 25 und 100, Differenzenregel, Sachaufgaben
+  const t = TOPIC.teilbar, old = t.gen;
+  t.lesson.push({ h: 'Regeln für 25 und 100', html: `<div class="merke">Durch <b>100</b> teilbar: Die Zahl endet auf <b>00</b>. &nbsp;(3 400 ✔ · 3 450 ✘)<br>Durch <b>25</b> teilbar: Die letzten zwei Ziffern sind <b>00, 25, 50</b> oder <b>75</b>. &nbsp;(1 375 ✔ · 1 360 ✘)<br>Durch <b>4</b> teilbar: Die Zahl aus den letzten zwei Ziffern ist durch 4 teilbar. &nbsp;(5 316 → 16 ✔)</div>
+    <div class="merke"><b>Differenzenregel:</b> Sind beide Zahlen durch eine Zahl teilbar, dann auch ihre Differenz. &nbsp;84 − 36 → beide durch 12 teilbar → 84 − 36 ist durch 12 teilbar.</div>` });
+  t.gen = L => {
+    const r = Math.random();
+    if (L >= 2 && r < 0.25) {
+      const k = pick([25, 100, 25, 4]), yes = Math.random() < 0.5;
+      let n; do { n = rnd(10, 99) * 100 + (k === 100 ? (yes ? 0 : pick([10, 25, 50, 75, 40])) : k === 25 ? (yes ? pick([0, 25, 50, 75]) : pick([10, 20, 35, 45, 60, 80, 5])) : (yes ? 4 * rnd(1, 24) : 4 * rnd(1, 24) + rnd(1, 3))); } while ((n % k === 0) !== yes);
+      const e2 = String(n).slice(-2), rule = k === 100 ? 'Die Zahl muss auf 00 enden.' : k === 25 ? 'Die letzten zwei Ziffern müssen 00, 25, 50 oder 75 sein.' : 'Die Zahl aus den letzten zwei Ziffern muss durch 4 teilbar sein.';
+      return CHOICE(`Ist <b>${n}</b> durch <b>${k}</b> teilbar?`, ['Ja', 'Nein'], yes ? 'Ja' : 'Nein', [rule, `Schau nur auf die letzten zwei Ziffern: <b>${e2}</b>`],
+        [`Regel für ${k}: ${rule}`, `Die letzten zwei Ziffern sind ${e2} → ${yes ? '<b>Ja</b>' : '<b>Nein</b>'}`]);
+    }
+    if (L === 3 && r < 0.4) {
+      const k = pick([3, 4, 6, 7, 8, 12]), yes = Math.random() < 0.5, a = k * rnd(10, 30); let b = k * rnd(2, 9) + (yes ? 0 : rnd(1, k - 1));
+      return CHOICE(`Ist <b>${a} − ${b}</b> durch <b>${k}</b> teilbar?<br><span class="small muted">Tipp: Differenzenregel – du musst nicht ausrechnen!</span>`, ['Ja', 'Nein'], yes ? 'Ja' : 'Nein',
+        ['Prüfe beide Zahlen einzeln.', `Ist ${a} durch ${k} teilbar? Ist ${b} durch ${k} teilbar?`],
+        [`${a} : ${k} = ${a / k} ✔`, `${b} ist ${yes ? `durch ${k} teilbar (${b} : ${k} = ${b / k})` : `nicht durch ${k} teilbar`}`, yes ? 'Beide teilbar → die Differenz ist teilbar: <b>Ja</b>' : 'Nur eine Zahl ist teilbar → die Differenz ist <b>nicht</b> teilbar: <b>Nein</b>']);
+    }
+    if (r < 0.4) {
+      const S2 = [
+        () => { const k = pick([3, 4, 6, 9]), yes = Math.random() < 0.5; let n; do { n = rnd(40, 200); } while ((n % k === 0) !== yes);
+          return CHOICE(`${n} Gummibärchen sollen gerecht auf <b>${k} Kinder</b> aufgeteilt werden, ohne dass eines übrig bleibt. Geht das?`, ['Ja', 'Nein'], yes ? 'Ja' : 'Nein', [`Das geht genau dann, wenn ${n} durch ${k} teilbar ist.`, k === 3 || k === 9 ? `Quersumme von ${n}: ${digitSum(n)}` : k === 4 ? `Letzte zwei Ziffern: ${n % 100}` : `Ist ${n} gerade und die Quersumme (${digitSum(n)}) durch 3 teilbar?`],
+            [`${n} : ${k} = ${Math.floor(n / k)}${n % k ? ` Rest ${n % k}` : ''}`, yes ? `Jedes Kind bekommt ${n / k} → <b>Ja</b>` : `Es bleiben ${n % k} übrig → <b>Nein</b>`]); },
+        () => { const n = pick([24, 30, 36, 48]), ds = divisors(n).filter(d => d > 1 && d < n);
+          return T({ q: `${n} Kinder sollen in <b>gleich große Gruppen</b> eingeteilt werden (mindestens 2 Gruppen, mindestens 2 Kinder pro Gruppe). Wie viele <b>Möglichkeiten</b> gibt es?`, answer: ds.length, hints: ['Die Gruppengröße muss ein Teiler von ' + n + ' sein.', `T${SUB(n)} = {${divisors(n).join(', ')}} – ohne 1 und ${n}.`], steps: [`Teiler von ${n} ohne 1 und ${n}: ${ds.join(', ')}`, `<b>${ds.length} Möglichkeiten</b>`] }); },
+      ];
+      return pick(S2)();
+    }
+    return old(L);
+  };
+}
+
+{ // Ganze Zahlen: Menge ℤ, Sachsituationen (Temperatur, Kontostand, Höhenmeter)
+  const t = TOPIC.ganz, old = t.gen;
+  t.lesson.push({ h: 'ℕ und ℤ', html: `<div class="merke"><b>Natürliche Zahlen</b> ℕ = {0, 1, 2, 3, …}<br><b>Ganze Zahlen</b> ℤ = {…, −3, −2, −1, 0, 1, 2, 3, …}<br>Jede natürliche Zahl ist auch eine ganze Zahl. Die negativen Zahlen sind ganze, aber keine natürlichen Zahlen.<br>½ oder 2,5 sind <b>keine</b> ganzen Zahlen.</div>
+    <div class="story">🏔️ <b>Höhenmeter</b> werden vom Meeresspiegel (0 m) aus gemessen: Der Großglockner liegt 3 798 m <b>über</b> dem Meer (+3 798 m), das Ufer des Toten Meeres etwa 430 m <b>unter</b> dem Meer (−430 m).</div>` });
+  t.gen = L => {
+    const r = Math.random();
+    if (r < 0.2) {
+      const kind = pick(['nat', 'ganz', 'keine']);
+      const nat = String(rnd(1, 30)), neg = sg(-rnd(1, 30)), frac = pick(['½', '2,5', '0,3', '¾', '−1,5']);
+      if (kind === 'keine') return CHOICE('Welche Zahl ist <b>keine</b> ganze Zahl?', shuffle([nat, neg, '0', frac]), frac, ['Ganze Zahlen haben keine Kommastellen und sind keine Brüche.', 'ℤ = {…, −2, −1, 0, 1, 2, …}'], [`<b>${frac}</b> liegt zwischen zwei ganzen Zahlen → keine ganze Zahl`]);
+      if (kind === 'nat') return CHOICE(`Ist <b>${neg}</b> eine <b>natürliche</b> Zahl?`, ['Ja', 'Nein'], 'Nein', ['ℕ = {0, 1, 2, 3, …} – ohne Minus.', 'Negative Zahlen gehören zu ℤ, aber nicht zu ℕ.'], [`${neg} ist negativ → keine natürliche Zahl, aber eine ganze Zahl: <b>Nein</b>`]);
+      return CHOICE(`Ist <b>${nat}</b> eine <b>ganze</b> Zahl?`, ['Ja', 'Nein'], 'Ja', ['ℤ = {…, −2, −1, 0, 1, 2, …}', 'Jede natürliche Zahl ist auch eine ganze Zahl.'], [`${nat} ∈ ℕ und damit auch ${nat} ∈ ℤ: <b>Ja</b>`]);
+    }
+    if (r < 0.4) {
+      const S2 = [
+        () => { const v = rnd(2, 15); return T({ q: `Es hat <b>${v} Grad unter null</b>. Schreibe die Temperatur als ganze Zahl.`, answer: -v, unit: '°C', hints: ['Unter null → negative Zahl (mit Minus).'], steps: [`${v} Grad unter null = <b>${sg(-v)} °C</b>`], traps: [{ v, msg: 'Unter null heißt: mit Minus!' }] }); },
+        () => { const v = rnd(2, 40) * 5; return T({ q: `Ein Taucher ist <b>${v} m unter</b> dem Meeresspiegel. Gib seine Höhe als ganze Zahl an.`, answer: -v, unit: 'm', hints: ['Der Meeresspiegel ist 0 m. Darunter → negativ.'], steps: [`${v} m unter dem Meer = <b>${sg(-v)} m</b>`], traps: [{ v, msg: 'Unter dem Meeresspiegel → mit Minus!' }] }); },
+        () => { const v = rnd(2, 30) * 10; return T({ q: `Auf Maxis Konto sind <b>${v} € Schulden</b>. Wie lautet der Kontostand?`, answer: -v, unit: '€', hints: ['Schulden → negativer Kontostand.'], steps: [`${v} € Schulden = Kontostand <b>${sg(-v)} €</b>`], traps: [{ v, msg: 'Schulden schreibt man mit Minus!' }] }); },
+        () => { const a = -rnd(2, 12), b = -rnd(2, 12); if (a === b) return T({ q: `Was bedeutet ein Kontostand von <b>0 €</b>?`, type: 'choice', choices: ['kein Geld und keine Schulden', 'Schulden', 'Guthaben'], answer: 'kein Geld und keine Schulden', hints: ['0 liegt genau zwischen Guthaben (+) und Schulden (−).'], steps: ['0 € → <b>kein Geld und keine Schulden</b>'] });
+          const c = Math.min(a, b); return CHOICE(`In Wien hat es <b>${sg(a)} °C</b>, in Innsbruck <b>${sg(b)} °C</b>. Wo ist es <b>kälter</b>?`, ['Wien', 'Innsbruck'], c === a ? 'Wien' : 'Innsbruck', ['Kälter = die kleinere Zahl.', 'Bei negativen Zahlen: weiter weg von 0 → kälter.'], [`${sg(c)} °C &lt; ${sg(Math.max(a, b))} °C`, `Kälter ist es in <b>${c === a ? 'Wien' : 'Innsbruck'}</b>`]); },
+      ];
+      return pick(S2)();
+    }
+    return old(L);
+  };
+}
+
+{ // Ganze Zahlen ± natürliche Zahl (laut Stoff ohne „− (−…)“), mehr Sachaufgaben
+  const t = TOPIC.ganzrech, old = t.gen;
+  t.gen = L => {
+    if (L < 3) return old(L);
+    const k = rnd(1, 5);
+    if (k === 1) { const a = rnd(-12, 8), b = rnd(3, 12), c = rnd(3, 15), r1 = a + b, res = r1 - c;
+      return T({ q: `${sg(a)} + ${b} − ${c} = ?`, answer: res, hints: ['Rechne von links nach rechts – Schritt für Schritt.', `Zuerst ${sg(a)} + ${b} = ${sg(r1)}.`], steps: [`${sg(a)} + ${b} = ${sg(r1)}`, `${sg(r1)} − ${c} = <b>${sg(res)}</b>`], traps: [{ v: -res, msg: 'Das Vorzeichen stimmt nicht – kontrolliere mit der Zahlengeraden!' }] }); }
+    if (k === 2) { const a = rnd(-8, 5), d = rnd(4, 14), e = a - d;
+      return T({ q: `Am Abend hat es <b>${sg(a)} °C</b>. In der Nacht <b>sinkt</b> die Temperatur um <b>${d} Grad</b>. Wie kalt ist es dann?`, answer: e, unit: '°C', hints: ['Sinken = minus rechnen.', `${sg(a)} − ${d} = ?`], steps: [`${sg(a)} − ${d}`, `= <b>${sg(e)} °C</b>`], traps: [{ v: a + d, msg: 'Die Temperatur SINKT – es wird kälter, also minus!' }] }); }
+    if (k === 3) { const a = -rnd(3, 20) * 5, u = rnd(2, 8) * 5;
+      return T({ q: `Ein Taucher ist in <b>${sg(a)} m</b> Tiefe. Er steigt <b>${u} m</b> nach oben. In welcher Tiefe ist er jetzt?`, answer: a + u, unit: 'm', hints: ['Nach oben = plus rechnen.', `${sg(a)} + ${u} = ?`], steps: [`${sg(a)} + ${u}`, `= <b>${sg(a + u)} m</b>`], traps: [{ v: a - u, msg: 'Er steigt nach OBEN – die Zahl wird größer!' }] }); }
+    if (k === 4) { const a = rnd(-5, 12) * 10, w = rnd(3, 15) * 10;
+      return T({ q: `Kontostand: <b>${sg(a)} €</b>. Tim hebt <b>${w} €</b> ab. Wie hoch ist der Kontostand jetzt?`, answer: a - w, unit: '€', hints: ['Abheben = Geld wird weniger → minus.', `${sg(a)} − ${w} = ?`], steps: [`${sg(a)} − ${w}`, `= <b>${sg(a - w)} €</b>`], traps: [{ v: w - a, msg: 'Das Vorzeichen stimmt nicht – nach dem Abheben ist der Kontostand kleiner.' }] }); }
+    const a = rnd(-15, -2), r = rnd(-6, 9), x = r - a;
+    return T({ q: `Ergänze: &nbsp; <b>${sg(a)} + ☐ = ${sg(r)}</b>`, answer: x, hints: ['Wie viele Schritte musst du auf der Zahlengeraden nach rechts gehen?', `Von ${sg(a)} bis ${sg(r)} zählen.`], steps: [`Von ${sg(a)} bis ${sg(r)} sind es ${x} Schritte nach rechts`, `☐ = <b>${x}</b>`], traps: [{ v: -x, msg: 'Du gehst nach rechts – die gesuchte Zahl ist positiv!' }] });
+  };
+}
+
+{ // Winkel: ∢ab, Winkel abschätzen, Uhrzeiger
+  const t = TOPIC.winkel, old = t.gen;
+  t.gen = L => {
+    const r = Math.random();
+    if (L >= 2 && r < 0.2) {
+      const [a, b] = pick([['a', 'b'], ['g', 'h'], ['s', 't'], ['p', 'q']]);
+      return CHOICE(`Der Winkel <b>∢${a}${b}</b>: Von welchem Schenkel aus wird gedreht?`, [`von ${a} nach ${b}`, `von ${b} nach ${a}`], `von ${a} nach ${b}`, ['Bei ∢ab dreht man vom ERSTEN Strahl zum zweiten.', 'Gedreht wird gegen den Uhrzeigersinn.'], [`∢${a}${b}: vom Strahl <b>${a}</b> gegen den Uhrzeigersinn zum Strahl <b>${b}</b>`]);
+    }
+    if (r < 0.2) {
+      const d = rnd(3, 33) * 5, opts = [...new Set([d, d + pick([30, 40, 50]), Math.max(10, d - pick([30, 40, 50])), d < 90 ? d + 90 : d - 70])].slice(0, 4);
+      return CHOICE('Wie groß ist dieser Winkel <b>ungefähr</b>?', shuffle(opts.map(x => x + '°')), d + '°', ['Vergleiche mit einem rechten Winkel (90°) und einem gestreckten Winkel (180°).', d < 90 ? 'Der Winkel ist spitz – also kleiner als 90°.' : d === 90 ? 'Das ist eine Ecke wie bei einem Blatt Papier.' : 'Der Winkel ist stumpf – zwischen 90° und 180°.'],
+        [`Der Winkel ist ${d < 90 ? 'kleiner' : d > 90 ? 'größer' : 'genau'} ${d === 90 ? '' : 'als '}90°`, `Gemessen: <b>${d}°</b>`], { visual: svgAngle(d, { size: 220 }) });
+    }
+    if (r < 0.32) {
+      const h = pick([1, 2, 3, 4, 5, 6]), w = h * 30;
+      return T({ q: `Wie groß ist der Winkel zwischen den beiden Uhrzeigern um <b>${h} Uhr</b>?`, answer: w, unit: '°', hints: ['Eine ganze Runde hat 360°. Auf der Uhr sind 12 Stunden.', `360° : 12 = 30° pro Stunde. Und ${h} Stunden?`], steps: ['360° : 12 = 30° von Zahl zu Zahl', `${h} · 30° = <b>${w}°</b>`] });
+    }
+    return old(L);
+  };
+}
+
+{ // Neben- und Scheitelwinkel kombiniert (Parallelwinkel sind nicht Schularbeitsstoff → seltener)
+  const t = TOPIC.parallelwinkel, old = t.gen;
+  t.gen = L => {
+    if (L === 3 && Math.random() < 0.6) {
+      const a = pick([rnd(5, 17), rnd(19, 32)]) * 5, k = rnd(1, 3);
+      if (k === 1) return T({ q: `Zwei Geraden schneiden einander. α = ${a}°. Der Winkel δ liegt α <b>gegenüber</b>. Wie groß ist der <b>Nebenwinkel von δ</b>?`, visual: svgCross(a, 'δ', 'scheitel'), answer: 180 - a, unit: '°', hints: ['δ liegt gegenüber → Scheitelwinkel → δ = α.', `Nebenwinkel von δ = 180° − δ`], steps: [`δ = α = ${a}° (Scheitelwinkel)`, `Nebenwinkel = 180° − ${a}° = <b>${180 - a}°</b>`], traps: [{ v: a, msg: 'Das ist δ selbst. Gesucht ist der NEBENWINKEL von δ.' }] });
+      if (k === 2) { const x = rnd(2, 8) * 10; return T({ q: `Zwei Nebenwinkel: Der eine ist um <b>${x}°</b> größer als der andere. Wie groß ist der <b>kleinere</b>?`, answer: (180 - x) / 2, unit: '°', hints: ['Nebenwinkel ergeben zusammen 180°.', `Zieh zuerst die ${x}° ab und teile den Rest durch 2.`], steps: [`180° − ${x}° = ${180 - x}°`, `${180 - x}° : 2 = <b>${(180 - x) / 2}°</b>`, `Probe: ${(180 - x) / 2}° + ${(180 + x) / 2}° = 180° ✔`] }); }
+      return CHOICE(`α und β sind <b>Scheitelwinkel</b>. α = ${a}°. Welche Aussage stimmt?`, shuffle([`β = ${a}°`, `β = ${180 - a}°`, `α + β = 180°`, `β = ${360 - a}°`]), `β = ${a}°`, ['Scheitelwinkel liegen einander gegenüber.', 'Scheitelwinkel sind gleich groß.'], [`Scheitelwinkel sind gleich groß → <b>β = ${a}°</b>`]);
+    }
+    return old(L);
+  };
+}
+
+{ // Koordinatensystem: Achsen beschriften, Ursprung, Figuren
+  const t = TOPIC.koordinaten, old = t.gen;
+  t.gen = L => {
+    if (Math.random() < 0.15) {
+      const Q = [['Wie heißt die <b>waagrechte</b> Achse?', ['x-Achse', 'y-Achse', 'Ursprung'], 'x-Achse', 'Die erste Koordinate (x) zählt nach rechts – entlang der waagrechten Achse.'],
+        ['Welche Koordinaten hat der <b>Ursprung</b>?', ['(0|0)', '(1|1)', '(0|1)'], '(0|0)', 'Der Ursprung ist der Schnittpunkt der beiden Achsen.'],
+        ['In welchem Quadranten sind <b>beide</b> Koordinaten negativ?', ['1.', '2.', '3.', '4.'], '3.', 'Links (x negativ) und unten (y negativ).'],
+        ['Der Punkt P = (0|4) liegt …', ['auf der y-Achse', 'auf der x-Achse', 'im 1. Quadranten'], 'auf der y-Achse', 'x = 0 heißt: kein Schritt nach rechts oder links.']];
+      const [q, ch, a, why] = pick(Q);
+      return CHOICE(q, ch, a, [why], [`→ <b>${a}</b>`]);
+    }
+    return old(L);
+  };
+}
 </script>
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '31.10.2026 08:13';
+const APP_VER = '31.10.2026 08:39';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2246,7 +2383,9 @@ const defState = () => ({ profile: null, settings: { goal: 10, sound: true, voic
 let S = (() => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) return Object.assign(defState(), s, { settings: Object.assign(defState().settings, s.settings) }); } catch (e) { } return defState(); })();
 if (!S.settings.focusInit) { S.settings.focusInit = true; if (!S.settings.focus.length) S.settings.focus = [...BOOK.defaultFocus]; }
 if (!S.settings.exam && BOOK.examDefault) S.settings.exam = JSON.parse(JSON.stringify(BOOK.examDefault));
-if ((S.settings.focusVer || 1) < (BOOK.focusVer || 1)) { S.settings.focusVer = BOOK.focusVer; S.settings.focus = [...new Set([...BOOK.defaultFocus, ...S.settings.focus.filter(id => !['koordinaten'].includes(id))])]; }
+if ((S.settings.focusVer || 1) < (BOOK.focusVer || 1)) { S.settings.focusVer = BOOK.focusVer; S.settings.focus = [...new Set([...BOOK.defaultFocus, ...S.settings.focus.filter(id => !['koordinaten', 'koerper', 'einheiten'].includes(id))])]; S.setMod = Date.now(); }
+// Schularbeitsstoff wurde bekanntgegeben → vorläufigen Plan einmalig durch den offiziellen ersetzen
+if ((S.settings.examVer || 1) < (BOOK.examVer || 1)) { S.settings.examVer = BOOK.examVer; S.settings.exam = JSON.parse(JSON.stringify(BOOK.examDefault)); S.examDay = null; S.setMod = Date.now(); }
 // Kann dieser Browser hier dauerhaft speichern? (Nicht z. B. in Vorschau-Fenstern, InPrivate oder mit blockiertem Speicher)
 let STORAGE_OK = (() => { try { const k = '__euli_test'; localStorage.setItem(k, '1'); const ok = localStorage.getItem(k) === '1'; localStorage.removeItem(k); return ok; } catch (e) { return false; } })();
 const save = () => {
@@ -2894,7 +3033,7 @@ const VIEWS = {
         <li><b>Teilermengen unvollständig</b> (z. B. T₄₂ ohne 3 und 14) → Methode „Teilerpaare“, eigene Eingabe der ganzen Teilermenge mit Rückmeldung, wie viele Teiler fehlen.</li>
         <li><b>Vielfachenmengen ohne die Zahl selbst</b> (V₂ = {4, 6, …}) → eigene Übung, die genau diesen Fehler erkennt und erklärt.</li>
         <li><b>Raummaße</b> (1 m³ = 100 dm³ statt 1000) und <b>Einheit der Oberfläche</b> (dm³ statt dm²) → Wiederholungsaufgaben mit passender Fehlermeldung.</li></ul>
-        <p style="margin-bottom:0">Diese Themen kommen im Tagestraining öfter dran. Aktuell im Unterricht: Winkel, Neben- und Scheitelwinkel (H1), davor ganze Zahlen (B) und Teilbarkeit (A).</p></div>
+        <p style="margin-bottom:0">Diese Themen kommen im Tagestraining öfter dran. Stoff der 1. Schularbeit (13.11.): Teilbarkeit (A, S. 18–37), ganze Zahlen ± natürliche Zahlen (B, S. 40–49), Winkel, Neben- & Scheitelwinkel und Koordinatensystem (H, S. 178–186) – zu jedem Thema auch Textaufgaben. Der Lernplan auf der Startseite ist darauf eingestellt.</p></div>
       <h2>🩺 Speicher-Test</h2><div class="card small"><p style="margin-top:0">${SAVE_HANDLE ? '✅ <b>Spielstand-Datei verbunden</b> – Fortschritt wird automatisch darin gespeichert.<br>' : ''}${STORAGE_OK ? '✅ <b>Speichern funktioniert</b> in diesem Browser.' : '❌ <b>Speichern funktioniert hier NICHT.</b> Bitte die Datei auf den Desktop kopieren und per Doppelklick in Edge oder Chrome öffnen.'}</p>
         <div>Gespeichert: Name <b>${S.profile ? esc(S.profile.name) : '–'}</b> · ${S.total} Aufgaben · ${Object.keys(S.days).length} Übungstage</div>
         <div>Browser: <b>${/Edg\//.test(navigator.userAgent) ? 'Microsoft Edge' : /OPR\//.test(navigator.userAgent) ? 'Opera' : /Firefox\//.test(navigator.userAgent) ? 'Firefox' : /Chrome\//.test(navigator.userAgent) ? 'Google Chrome' : /Safari\//.test(navigator.userAgent) ? 'Safari' : 'unbekannt'}</b></div>
