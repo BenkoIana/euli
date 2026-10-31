@@ -2225,7 +2225,7 @@ BOOK.examDefault = { date: '2026-11-13', name: '1. Schularbeit', topics: ['koerp
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '31.10.2026 08:10';
+const APP_VER = '31.10.2026 08:13';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2956,7 +2956,12 @@ function editProfile() { header(); VIEWS.onboarding(true); }
 
 window.addEventListener('DOMContentLoaded', async () => {
   go('home'); if ('speechSynthesis' in window) speechSynthesis.getVoices();
-  if (IS_WEB && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => { });
+  if (IS_WEB && 'serviceWorker' in navigator) {
+    // neue Version gefunden → einmal automatisch neu laden (nicht mitten in einer Übung)
+    const hadCtrl = !!navigator.serviceWorker.controller; let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!hadCtrl || reloaded) return; reloaded = true; const r = () => location.reload(); if (['practice', 'lesson'].includes(VIEW)) addEventListener('visibilitychange', r, { once: true }); else r(); });
+    navigator.serviceWorker.register('sw.js').then(reg => { reg.update(); setInterval(() => reg.update(), 30 * 60 * 1000); }).catch(() => { });
+  }
   try { if (navigator.storage?.persist && !(await navigator.storage.persisted())) await navigator.storage.persist(); } catch (e) { }
   // Falls der normale Speicher leer ist, aber die zweite Sicherung noch da: Fortschritt wiederherstellen
   const b = await idbLoad();

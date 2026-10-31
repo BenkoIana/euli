@@ -1,5 +1,5 @@
 // Euli offline: App-Dateien zwischenspeichern, neue Version im Hintergrund holen
-const CACHE = 'euli-b871aa045b';
+const CACHE = 'euli-0e28e72e3d';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
