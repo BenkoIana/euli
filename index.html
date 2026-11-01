@@ -314,6 +314,29 @@ select.ans,input.ans[type=date]{box-shadow:none}
 button.card{font:inherit;color:inherit;width:100%}
 .brand,.parents-btn,.pill{white-space:nowrap}
 @media (max-width:1060px){.brand span{display:none}}
+/* eigene Zahlentastatur (Handy/Tablet) */
+.keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:440px;margin:0 auto 12px}
+.key{height:50px;font-size:24px;font-weight:900;border-radius:14px;border:2px solid var(--line2);background:#fff;color:var(--ink);box-shadow:0 4px 0 var(--line2);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.key:active{transform:translateY(4px);box-shadow:none;background:var(--blue-soft)}
+.key.fn{background:#f3f0fa;color:var(--pri)}
+.key.w3{grid-column:span 3} .key.w4{grid-column:span 4}
+body[data-focus] main:has(.keypad){padding-bottom:380px!important}
+.inline-task .keypad{margin-top:8px}
+/* Tagesziel-Feier */
+.streak-big{font-size:76px;font-weight:900;color:var(--orange);line-height:1;margin-top:6px;text-shadow:0 4px 0 #ffd9a8}
+.streak-big span{display:inline-block}
+.streak-big span.bump{animation:bump .6s cubic-bezier(.3,1.8,.5,1)}
+@keyframes bump{0%{transform:scale(.4);opacity:0}100%{transform:scale(1)}}
+.week{display:flex;justify-content:center;gap:8px;margin-top:18px;flex-wrap:wrap}
+.wd{display:flex;flex-direction:column;align-items:center;gap:4px}
+.wd .wl{font-size:14px;font-weight:900;color:var(--muted)}
+.wd .wc{width:40px;height:40px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-size:20px}
+.wd.done .wc{background:#ffe2b8;box-shadow:0 3px 0 #ffc77a}
+.wd.today .wl{color:var(--orange)} .wd.today .wc{outline:3px solid var(--orange);outline-offset:2px}
+.wd.future .wc{opacity:.5}
+/* Erklärungen in Häppchen */
+.later{display:none!important}
+.appear{animation:pop .35s ease}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7c4dff">
@@ -2523,7 +2546,7 @@ BOOK.boost = { teilbar: 1.8, ggtkgv: 1.5, ganzrech: 1.3, koordinaten: 1.3 };
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '01.11.2026 08:10';
+const APP_VER = '01.11.2026 08:24';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2758,13 +2781,16 @@ function speakable(html) {
 }
 function say(html) {
   if (!('speechSynthesis' in window)) return toast('Vorlesen geht in diesem Browser leider nicht.');
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(speakable(html)); u.lang = 'de-AT'; u.rate = 0.92;
-  const v = speechSynthesis.getVoices().find(v => /^de/i.test(v.lang)); if (v) u.voice = v;
-  speechSynthesis.speak(u);
+  try {  // Vorlesen darf die App nie blockieren
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(speakable(html)); u.lang = 'de-AT'; u.rate = 0.92;
+    const v = speechSynthesis.getVoices().find(v => /^de/i.test(v.lang)); if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) { }
 }
 function toast(msg, ms = 2600) {
   let box = $('#toasts'); if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.body.appendChild(box); }
+  while (box.children.length >= 2) box.firstChild.remove();
   const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = msg; box.appendChild(t); setTimeout(() => t.remove(), ms);
 }
 function confetti(n = 140) {
@@ -2797,8 +2823,11 @@ const BADGES = [
   { id: 'fix10', icon: '🔧', name: 'Fehler-Fresserin', desc: '10 alte Fehler ausgebessert', t: () => S.fixed >= 10 },
   { id: 'all', icon: '🌈', name: 'Weltreisende', desc: 'Jedes Thema mindestens einmal geübt', t: () => TOPICS.every(t => tp(t.id).seen > 0) },
 ];
+let NEW_BADGES = [];  // beim Üben verdiente Abzeichen – werden am Ende gesammelt gezeigt
+const newBadgesHTML = () => { if (!NEW_BADGES.length) return ''; const h = `<div class="card" style="margin:0 0 16px;text-align:center"><div class="slide-meta">🏅 ${NEW_BADGES.length === 1 ? 'Neues Abzeichen' : 'Neue Abzeichen'}</div><div class="row" style="justify-content:center;margin-top:10px">${NEW_BADGES.map(b => `<div class="badge" style="padding:4px 10px"><div class="ic">${b.icon}</div><b>${b.name}</b></div>`).join('')}</div></div>`; NEW_BADGES = []; return h; };
 function checkBadges() {
-  BADGES.forEach(b => { if (!S.badges.includes(b.id) && b.t()) { S.badges.push(b.id); save(); setTimeout(() => { toast(`${b.icon} Neues Abzeichen: <b>${b.name}</b>!`, 3500); sndWin(); }, 600); } });
+  BADGES.forEach(b => { if (!S.badges.includes(b.id) && b.t()) { S.badges.push(b.id); save();
+    if (['practice', 'lesson'].includes(VIEW)) NEW_BADGES.push(b); else setTimeout(() => { toast(`${b.icon} Neues Abzeichen: <b>${b.name}</b>!`, 3500); sndWin(); }, 600); } });
 }
 
 /* ---------- Grundgerüst ---------- */
@@ -2819,13 +2848,28 @@ function header() {
     ${S.profile ? `<button class="avatar-btn" onclick="go('badges')" title="Meine Erfolge">${S.profile.avatar}</button>` : ''}</div>`;
   const tabs = $('#tabs'); if (tabs) tabs.innerHTML = navBtns;
 }
+function weekReport() {
+  const days = []; for (let k = 6; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); days.push([d, S.days[dkey(d)] || { n: 0, ok1: 0, sec: 0 }]); }
+  const n = days.reduce((a, [, r]) => a + r.n, 0), ok1 = days.reduce((a, [, r]) => a + (r.ok1 || 0), 0), min = Math.round(days.reduce((a, [, r]) => a + (r.sec || 0), 0) / 60), act = days.filter(([, r]) => r.n > 0).length;
+  const mx = Math.max(S.settings.goal, ...days.map(([, r]) => r.n)), wk = dkey(days[0][0]);
+  const topics = TOPICS.filter(t => (tp(t.id).last || '') >= wk).sort((a, b) => tp(a.id).m - tp(b.id).m);
+  const ex = examInfo(), weak = (ex ? ex.ids : S.settings.focus).map(id => TOPIC[id]).filter(Boolean).sort((a, b) => tp(a.id).m - tp(b.id).m).slice(0, 3);
+  return `<h2>📊 Diese Woche</h2><div class="card">
+    <div class="row" style="align-items:flex-end;gap:10px;height:130px;flex-wrap:nowrap">${days.map(([d, r]) => `<div style="flex:1;text-align:center;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><div class="small" style="font-weight:800">${r.n || ''}</div><div style="height:${Math.round(r.n / mx * 80)}px;min-height:${r.n ? 6 : 2}px;border-radius:8px 8px 3px 3px;background:${r.goal ? '#58cc02' : r.n ? '#a3e36b' : '#e7e2f3'}"></div><div class="small muted" style="font-weight:800">${WTAG[d.getDay()]}</div></div>`).join('')}</div>
+    <p style="margin:14px 0 6px"><b>${act} von 7 Tagen</b> geübt · <b>${n}</b> Aufgaben · <b>${n ? Math.round(ok1 / n * 100) : 0} %</b> beim 1. Versuch richtig · <b>${min} min</b> Lernzeit · <b>${S.mistakes.length}</b> offene Fehler</p>
+    ${topics.length ? `<p class="small" style="margin:6px 0"><b>Geübte Themen:</b> ${topics.map(t => `${t.icon} ${t.title} (${tp(t.id).m} %)`).join(' · ')}</p>` : ''}
+    ${weak.length ? `<p class="small" style="margin:6px 0"><b>Hier lohnt sich gemeinsames Üben${ex ? ' für die Schularbeit' : ''}:</b> ${weak.map(t => `${t.icon} ${t.title} (${tp(t.id).m} %)`).join(' · ')}</p>` : ''}
+    <p class="small muted" style="margin-bottom:0">Grün = Tagesziel erreicht. Tipp: Lassen Sie sich ein Thema von Ihrem Kind erklären – das festigt das Wissen am stärksten.</p></div>`;
+}
 function quitPractice(i) { if (!i || confirm('Wirklich aufhören? Was du schon geschafft hast, ist gespeichert.')) go('home'); }
 let VIEW = 'home';
 function go(view, ...args) {
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   if (!S.profile && view !== 'parentsGate' && view !== 'parents') view = 'onboarding';
+  if (S.profile && !S.toured && view === 'home') view = 'tour';
   VIEW = view; window.scrollTo(0, 0);
-  if (['practice', 'lesson', 'summary'].includes(view)) document.body.dataset.focus = ''; else delete document.body.dataset.focus;
+  if (['practice', 'lesson', 'summary', 'goal', 'tour'].includes(view)) document.body.dataset.focus = ''; else delete document.body.dataset.focus;
+  document.body.style.zoom = S.settings.big ? '1.15' : '';
   header(); VIEWS[view](...args); storageBanner();
 }
 
@@ -2897,10 +2941,23 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
     <div class="answer-area">${answerHTML(t)}</div>
     ${t.note ? `<div class="center small muted">${t.note}</div>` : ''}
     <div class="hint-box hidden">${euli('think', 58)}<div class="hb"></div></div></div>
-    <div class="checkbar"><div class="inner"><div class="fb hidden"></div>
+    <div class="checkbar"><div class="inner"><div class="fb hidden"></div>${keypadHTML(t)}
     <div class="task-actions" data-acts><button class="btn ghost${test ? ' hidden' : ''}" data-hint>💡 Tipp</button>${t.type !== 'choice' ? '<button class="btn go big" data-check>Prüfen</button>' : ''}</div></div></div>`;
   const fb = $('.fb', box), hb = $('.hint-box', box), hBtn = $('[data-hint]', box), bar = $('.checkbar', box), state = k => bar.className = 'checkbar' + (k ? ' s-' + k : '');
-  const inputs = $$('input', box);
+  const inputs = $$('input', box), kp = $('[data-kp]', box);
+  if (kp) {
+    let act = inputs[0];
+    inputs.forEach(i => { i.setAttribute('inputmode', 'none'); i.addEventListener('focus', () => act = i); });
+    kp.addEventListener('pointerdown', e => e.preventDefault());  // Fokus bleibt im Eingabefeld
+    kp.addEventListener('click', e => {
+      const k = e.target.closest('[data-k]')?.dataset.k; if (!k || done || !act || act.disabled) return; buzz(8);
+      const a = act.selectionStart ?? act.value.length, b = act.selectionEnd ?? a;
+      if (k === 'next') { const n = inputs[(inputs.indexOf(act) + 1) % inputs.length]; n.focus(); act = n; return; }
+      if (k === 'del') { if (a !== b) act.setRangeText('', a, b, 'end'); else if (a > 0) act.setRangeText('', a - 1, a, 'end'); }
+      else act.setRangeText(k, a, b, 'end');
+      act.dispatchEvent(new Event('input', { bubbles: true })); act.focus();
+    });
+  }
   let sel = null; const pickBox = $('[data-pick]', box);
   const drawPick = (extra = {}) => { if (pickBox) pickBox.innerHTML = t.type === 'grid' ? svgCoord(Object.assign({}, t.grid, { sel }, extra)) : svgNumLine(Object.assign({}, t.line, { sel }, extra)); };
   if (pickBox) { drawPick(); pickBox.addEventListener('click', e => { if (done) return; const svg = $('svg', pickBox); if (!svg) return; sel = svgPick(e, svg); drawPick(); }); }
@@ -2913,7 +2970,7 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
   const finish = ok => {
     done = true; const sec = Math.round((Date.now() - t0) / 1000);
     const xp = ok ? (tries === 0 ? (hints ? 6 : 10) : 4) : 1;
-    inputs.forEach(i => i.disabled = true); $$('.choice', box).forEach(b => b.disabled = true);
+    inputs.forEach(i => i.disabled = true); $$('.choice', box).forEach(b => b.disabled = true); kp?.remove();
     if (pickBox) drawPick({ good: t.answer });
     $('[data-acts]', box).innerHTML = `<button class="btn go big wide" data-next>${nextLabel}</button>`;
     $('[data-next]', box).onclick = () => onNext && onNext();
@@ -2928,12 +2985,12 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
     if (r.partial) { fb.className = 'fb try'; state('try'); fb.innerHTML = `<div class="head">${r.partial}</div>`; sndTry(); return; }
     if (r.ok) {
       if (t.type === 'choice') $(`.choice[data-c="${CSS.escape(picked)}"]`, box)?.classList.add('picked-ok');
-      const xp = finish(true); sndOk(); if (tries === 0 && !hints) confetti(40);
+      const xp = finish(true); sndOk(); buzz(30); if (tries === 0 && !hints) confetti(40);
       fb.className = 'fb ok'; state('ok'); fb.innerHTML = `<div class="head">✅ ${pick(PRAISE)} <span class="xp-pop">+${xp} XP</span></div>
         <details><summary class="small">So geht der Rechenweg</summary><ol class="steps">${t.steps.map(s => `<li>${s}</li>`).join('')}</ol></details>`;
       return;
     }
-    tries++; sndTry();
+    tries++; sndTry(); buzz([60, 50, 60]);
     if (t.type === 'choice') { const b = $(`.choice[data-c="${CSS.escape(picked)}"]`, box); b?.classList.add('picked-bad'); if (b) b.disabled = true; }
     if (tries < maxTries) {
       fb.className = 'fb try'; state('try'); fb.innerHTML = `<div class="head">${r.trap ? '🤔 ' + r.trap.msg : pick(TRY_AGAIN)}</div>`;
@@ -2954,8 +3011,16 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
     check();
   }));
   setTimeout(() => inputs[0]?.focus(), 80);
+  if (S.settings.autoread && !test) setTimeout(() => say(t.q), 300);
 }
 
+const TOUCH = matchMedia('(pointer: coarse)').matches;
+const buzz = p => { if (S.settings.sound) try { navigator.vibrate?.(p); } catch (e) { } };
+function keypadHTML(t) {
+  if (!TOUCH || !['num', 'frac', 'set', 'point'].includes(t.type || 'num')) return '';
+  const multi = t.type === 'frac' || t.type === 'point', K = (k, l = k, c = '') => `<button type="button" class="key ${c}" data-k="${k}" aria-label="${l}">${l}</button>`;
+  return `<div class="keypad" data-kp>${['1', '2', '3'].map(x => K(x)).join('')}${K('del', '⌫', 'fn')}${['4', '5', '6'].map(x => K(x)).join('')}${K('−', '−', 'fn')}${['7', '8', '9'].map(x => K(x)).join('')}${K(',', ',', 'fn')}${K('0', '0', multi ? 'w3' : 'w4')}${multi ? K('next', t.type === 'frac' ? '⇅' : '⇥', 'fn') : ''}</div>`;
+}
 function makeTask(topicId, level) { const t = TOPIC[topicId].gen(level); t.topic = topicId; t.level = level; return t; }
 
 function record(t, r) {
@@ -2968,7 +3033,7 @@ function record(t, r) {
     S.mistakes.push(m); if (S.mistakes.length > 40) S.mistakes.shift();
   }
   if (r.ok && t.fromMistake) { S.mistakes = S.mistakes.filter(m => m.mid !== t.mid); S.fixedMids = [...(S.fixedMids || []), t.mid].slice(-300); S.fixed++; }
-  if (!d.goal && d.n >= S.settings.goal) { d.goal = true; S.xp += 20; setTimeout(() => { toast('🎯 Tagesziel geschafft! <b>+20 XP</b>', 3500); confetti(); sndWin(); }, 400); }
+  if (!d.goal && d.n >= S.settings.goal) { d.goal = true; S.xp += 20; if (VIEW !== 'practice') setTimeout(() => { toast('🎯 Tagesziel geschafft! <b>+20 XP</b>', 3500); confetti(); sndWin(); }, 400); }
   const before = lvl().l; save();
   if (lvl().l > before) setTimeout(() => { toast(`🎉 Level ${lvl().l}: <b>${lvl().title}</b>!`, 3500); confetti(200); sndWin(); }, 900);
   checkBadges(); header();
@@ -3122,10 +3187,16 @@ const VIEWS = {
       <div class="card slide"><div class="slide-meta">${t.icon} ${t.title} · Teil ${i + 1} von ${slides.length} · 📘 ${t.book}</div><h1>${sl.h}</h1><div id="sb">${sl.html || ''}</div>${sl.widget ? '<div class="widget" data-w></div>' : ''}</div>
       <div class="lessonbar"><div class="inner"><button class="btn ghost big" id="prev" ${i ? '' : 'disabled'} aria-label="Zurück">←</button><button class="btn ${i === slides.length - 1 ? 'go' : 'blue'} big" id="next">${i === slides.length - 1 ? 'Fertig – jetzt üben! 🚀' : 'Weiter'}</button></div></div>`;
     if (sl.widget) WIDGETS[sl.widget]($('[data-w]'), sl.wp);
-    $('#sayl').onclick = () => say(sl.h + '. ' + $('#sb').innerHTML);
+    $('#sayl').onclick = () => say(sl.h + '. ' + [...$('#sb').children].filter(e => !e.classList.contains('later')).map(e => e.innerHTML).join(' '));
     $('#prev').onclick = () => go('lesson', id, i - 1);
     const next = () => i === slides.length - 1 ? finishLesson(id) : go('lesson', id, i + 1);
-    $('#next').onclick = next;
+    const parts = sl.html && !sl.kind ? [...$('#sb').children] : [], wEl = $('[data-w]');
+    let shown = parts.length > 2 ? 1 : parts.length;
+    const paint = () => { parts.forEach((el, k) => el.classList.toggle('later', k >= shown)); wEl?.classList.toggle('later', shown < parts.length); $('#next').textContent = shown < parts.length ? 'Weiter ▾' : i === slides.length - 1 ? 'Fertig – jetzt üben! 🚀' : 'Weiter'; };
+    if (parts.length > 2) paint();
+    const reveal = () => { if (shown >= parts.length) return false; const el = parts[shown++]; paint(); el.classList.add('appear'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (S.settings.autoread) say(el.innerHTML); if (shown === parts.length && wEl) setTimeout(() => wEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 250); return true; };
+    if (S.settings.autoread) say(sl.h + '. ' + (parts.length ? parts.slice(0, shown).map(e => e.innerHTML).join(' ') : ''));
+    $('#next').onclick = () => reveal() || next();
     const sb = $('#sb');
     if (sl.kind === 'example') {
       const ex = makeTask(id, 1); let k = 0;
@@ -3151,8 +3222,8 @@ const VIEWS = {
     let combo = 0; for (let k = sess.res.length - 1; k >= 0 && sess.res[k].ok && !sess.res[k].tries; k--) combo++;
     app().innerHTML = `<div class="task-wrap practice-task"><div class="focusbar"><button class="x-btn" onclick="quitPractice(${sess.i})" aria-label="Beenden">✕</button><div class="progress" title="Aufgabe ${sess.i + 1} von ${sess.list.length}"><i style="width:${sess.i / sess.list.length * 100}%"></i></div><div class="combo ${combo ? '' : 'zero'}" title="richtig hintereinander">🔥 ${combo}</div></div><div id="tb"></div></div>`;
     mountTask($('#tb'), task, {
-      onResult: r => { sess.res.push(Object.assign({ topic: task.topic }, r)); record(task, r); const pi = $('.progress i'); if (pi) pi.style.width = (sess.i + 1) / sess.list.length * 100 + '%'; if (r.ok && !r.tries) { const c = $('.combo'); if (c) { c.classList.remove('zero'); c.textContent = '🔥 ' + (combo + 1); } } },
-      onNext: () => { sess.i++; sess.i >= sess.list.length ? go('summary', sess) : go('practice', sess); },
+      onResult: r => { const had = dayRec().goal; sess.res.push(Object.assign({ topic: task.topic, fixed: !!task.fromMistake && r.ok }, r)); record(task, r); if (!had && dayRec().goal) sess.goalHit = true; const pi = $('.progress i'); if (pi) pi.style.width = (sess.i + 1) / sess.list.length * 100 + '%'; if (r.ok && !r.tries) { const c = $('.combo'); if (c) { c.classList.remove('zero'); c.textContent = '🔥 ' + (combo + 1); } } },
+      onNext: () => { sess.i++; sess.i >= sess.list.length ? go(sess.goalHit ? 'goal' : 'summary', sess) : go('practice', sess); },
       nextLabel: sess.i === sess.list.length - 1 ? 'Fertig 🏁' : 'Weiter', test: !!sess.test,
     });
   },
@@ -3169,11 +3240,37 @@ const VIEWS = {
     const mood = ratio >= .7 ? 'cheer' : ratio >= .5 ? 'happy' : 'comfort';
     app().innerHTML = `<div class="task-wrap center" style="padding-top:10px"><div style="display:flex;justify-content:center">${euli(mood, 150, 'bob')}</div><h1 style="margin-top:8px">${sess.test ? 'Probe-Test fertig!' : 'Geschafft!'}</h1><p style="font-size:20px;font-weight:700;margin-top:0">${msg}</p>
       <div class="result-tiles"><div class="rt" style="--c:#ffc800"><div class="rl">XP</div><div class="rv">⚡ ${xp}</div></div><div class="rt" style="--c:#58cc02"><div class="rl">Richtig</div><div class="rv">🎯 ${ok}/${n}</div></div><div class="rt" style="--c:#1cb0f6"><div class="rl">1. Versuch</div><div class="rv">💪 ${first}</div></div></div>
+      ${newBadgesHTML()}
+      ${sess.res.some(r => r.fixed) ? `<div class="card" style="margin:0 0 16px;border-color:#b6ec8e;box-shadow:0 4px 0 #b6ec8e;font-weight:800">🧰 Du hast <b>${sess.res.filter(r => r.fixed).length}</b> ${sess.res.filter(r => r.fixed).length === 1 ? 'Fehler' : 'Fehler'} aus der Fehler-Kiste geknackt! 💪</div>` : ''}
       ${testInfo}
       ${weak.length ? `<div class="merke" style="text-align:left">Euli empfiehlt: Schau dir nochmal die Erklärung zu <b>${weak.map(t => t.title).join('</b> und <b>')}</b> an. 📖</div><div class="row" style="justify-content:center;margin-bottom:14px">${weak.slice(0, 2).map(t => `<button class="btn blue" onclick="go('lesson','${t.id}')">${t.icon} ${t.title}</button>`).join('')}</div>` : ''}
       ${!STORAGE_OK && !SAVE_HANDLE ? `<div class="merke" style="text-align:left;border-color:#ffc1c1">Damit dein Fortschritt nicht verloren geht: <div class="row" style="margin-top:6px">${saveFileButtons()}</div></div>` : ''}
       <button class="btn go big wide" style="max-width:420px;margin-top:8px" onclick="go('home')">Weiter</button></div>`;
     if (ratio >= .7) { confetti(180); sndWin(); }
+  },
+
+  tour(i = 0) {
+    const T = [['wave', 'Jeden Tag ein bisschen', `Auf der Startseite wartet jeden Tag dein <b>Training</b> mit ${S.settings.goal} Aufgaben. Der grüne Ring zeigt, wie viel du schon hast. Übst du mehrere Tage hintereinander, wächst deine 🔥 <b>Serie</b>!`],
+      ['think', 'Tipps und Fehler sind erlaubt', `Wenn du nicht weiterweißt, tippe auf <b>💡 Tipp</b>. Nach zwei Versuchen zeige ich dir den ganzen Rechenweg. Falsche Aufgaben kommen in die <b>🧰 Fehler-Kiste</b> – dort kannst du sie später knacken.`],
+      ['happy', 'Dein Lernpfad', `Unter <b>🗺️ Themen</b> findest du alle Kapitel aus deinem Buch. Schau dir zuerst die <b>📖 Erklärung</b> an, dann übe. Für jedes Thema sammelst du bis zu ⭐⭐⭐. Das 📝 zeigt, was zur Schularbeit kommt.`]];
+    const [m, h, txt] = T[i], last = i === T.length - 1;
+    app().innerHTML = `<div class="task-wrap center" style="padding-top:10px"><div class="dots" style="max-width:220px;margin:0 auto 18px">${T.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div>
+      <div style="display:flex;justify-content:center">${euli(m, 150, 'bob')}</div><h1>${h}</h1><div class="card" style="text-align:left;font-size:19px">${txt}</div>
+      <div class="row" style="justify-content:center;margin-top:22px"><button class="btn ghost" id="tskip">Überspringen</button><button class="btn ${last ? 'go' : 'blue'} big" id="tnext" style="min-width:200px">${last ? "Los geht's! 🚀" : 'Weiter'}</button></div></div>`;
+    const end = () => { S.toured = true; save(); go('home'); };
+    $('#tskip').onclick = end; $('#tnext').onclick = () => last ? end() : go('tour', i + 1);
+  },
+
+  goal(sess) {
+    const st = streak(), mon = new Date(); mon.setDate(mon.getDate() - (mon.getDay() + 6) % 7);
+    const week = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((w, k) => { const d = new Date(mon); d.setDate(mon.getDate() + k); const key = dkey(d), r = S.days[key]; return { w, done: r && r.n > 0, today: key === today(), future: key > today() }; });
+    app().innerHTML = `<div class="task-wrap center celebrate"><div style="display:flex;justify-content:center">${euli('cheer', 140, 'bob')}</div>
+      <div class="streak-big">🔥 <span id="stn">${Math.max(0, st - 1)}</span></div><h1 style="margin:0">${st === 1 ? 'Tag' : 'Tage'} in Folge!</h1>
+      <p style="font-size:19px;font-weight:700">🎯 Tagesziel geschafft! ${st > 1 ? `Du hast schon ${st} Tage hintereinander geübt – so wird dein Gehirn richtig stark!` : 'Komm morgen wieder, dann wächst deine Serie! 🔥'}</p>
+      <div class="week">${week.map(d => `<div class="wd ${d.done ? 'done' : ''} ${d.today ? 'today' : ''} ${d.future ? 'future' : ''}"><div class="wl">${d.w}</div><div class="wc">${d.done ? '🔥' : ''}</div></div>`).join('')}</div>
+      <button class="btn go big wide" style="max-width:420px;margin-top:22px" id="gonext">Weiter</button></div>`;
+    setTimeout(() => { const n = $('#stn'); if (n) { n.textContent = st; n.classList.add('bump'); } sndWin(); confetti(200); }, 500);
+    $('#gonext').onclick = () => go('summary', sess);
   },
 
   badges() {
@@ -3202,6 +3299,7 @@ const VIEWS = {
       <div class="grid g3"><div class="card center"><div class="stat">${last7}/7</div><div class="small muted">Übungstage letzte Woche</div></div><div class="card center"><div class="stat">${tot}</div><div class="small muted">Aufgaben gesamt</div></div>
         <div class="card center"><div class="stat">${tot ? Math.round(ok1 / tot * 100) : 0}%</div><div class="small muted">beim 1. Versuch richtig</div></div><div class="card center"><div class="stat">${act.length ? Math.round(sec / 60 / act.length) : 0} min</div><div class="small muted">Ø Lernzeit pro Übungstag</div></div>
         <div class="card center"><div class="stat">${S.lessons}</div><div class="small muted">Erklärungen durchgearbeitet</div></div><div class="card center"><div class="stat">${S.mistakes.length}</div><div class="small muted">offene Fehler in der Kiste</div></div></div>
+      ${weekReport()}
       <h2>📅 Letzte 4 Wochen</h2><div class="card"><div class="cal">${days.map(([k, d, dt]) => `<i title="${dt.toLocaleDateString('de-AT')}: ${d ? d.n : 0} Aufgaben" style="background:${!d || !d.n ? '#ece4f5' : d.goal ? '#16a34a' : '#86efac'}">${dt.getDate()}</i>`).join('')}</div><p class="small muted">Dunkelgrün = Tagesziel erreicht · Hellgrün = geübt</p></div>
       <h2>📈 Stand pro Thema</h2><div class="card" style="overflow-x:auto"><table class="ptbl"><tr><th>Thema</th><th>Können</th><th>Stufe</th><th>Aufgaben</th><th>richtig</th><th>offene Fehler</th><th>zuletzt</th></tr>
         ${TOPICS.map(t => { const s = tp(t.id); return `<tr><td>${t.icon} ${t.title}${s.lesson ? ' 📖' : ''}</td><td style="min-width:110px"><div class="mbar"><i style="width:${s.m}%"></i></div><span class="small">${s.m}%</span></td><td>${levelOf(t.id)}</td><td>${s.seen}</td><td>${s.seen ? Math.round(s.ok / s.seen * 100) + '%' : '–'}</td><td>${mByTopic[t.id] || ''}</td><td class="small">${s.last ? new Date(s.last).toLocaleDateString('de-AT') : '–'}</td></tr>`; }).join('')}</table>
@@ -3226,7 +3324,9 @@ const VIEWS = {
       <h2>🏫 Wo seid ihr gerade im Buch „${BOOK.title}“?</h2><div class="card"><p class="small muted" style="margin-top:0">Hakerl bei den Kapiteln setzen, die gerade in der Schule dran sind (Seitenzahlen stehen dabei). Markierte Themen kommen im Tagestraining 3-mal so oft dran und werden auf der Startseite als „Neu in der Schule“ vorgeschlagen. Am besten jede Woche kurz mit dem Schulheft abgleichen.</p>
         <div class="focus-list">${GROUPS.map(g => `<div style="break-inside:avoid;margin-bottom:8px"><b>${g.icon} ${g.name}</b>${TOPICS.filter(t => t.group === g.id).map(t => `<label><input type="checkbox" data-f="${t.id}" ${S.settings.focus.includes(t.id) ? 'checked' : ''}> ${t.title} <span class="muted small">(${t.book.split(' · ')[1] || t.book})</span></label>`).join('')}</div>`).join('')}</div></div>
       <h2>⚙️ Einstellungen</h2><div class="card"><div class="row"><label>Tagesziel: <select id="goal" class="ans" style="width:auto;font-size:18px">${[5, 8, 10, 12, 15, 20].map(n => `<option ${n === S.settings.goal ? 'selected' : ''} value="${n}">${n} Aufgaben (~${Math.round(n * 1.5)} min)</option>`).join('')}</select></label></div>
-        <p><label><input type="checkbox" id="snd" ${S.settings.sound ? 'checked' : ''}> Töne</label> &nbsp; <label><input type="checkbox" id="voi" ${S.settings.voice ? 'checked' : ''}> Vorlese-Knopf 🔊 anzeigen</label></p>
+        <p><label><input type="checkbox" id="snd" ${S.settings.sound ? 'checked' : ''}> Töne & Vibration</label> &nbsp; <label><input type="checkbox" id="voi" ${S.settings.voice ? 'checked' : ''}> Vorlese-Knopf 🔊 anzeigen</label></p>
+        <p><label><input type="checkbox" id="aread" ${S.settings.autoread ? 'checked' : ''}> Aufgaben und Erklärungen <b>automatisch vorlesen</b> (hilfreich, wenn Lesen anstrengend ist)</label></p>
+        <p><label><input type="checkbox" id="bigf" ${S.settings.big ? 'checked' : ''}> <b>Große Schrift</b></label> &nbsp; <button class="btn ghost" onclick="S.toured=false;save();go('home')">🦉 Einführung nochmal zeigen</button></p>
         <div class="row"><button class="btn" id="exp">💾 Fortschritt sichern (Datei)</button><label class="btn" style="cursor:pointer">📂 Sicherung laden<input type="file" id="imp" accept=".json" hidden></label><button class="btn ghost" id="clrm">Fehler-Kiste leeren</button><button class="btn ghost" id="rst" style="color:var(--bad)">Alles zurücksetzen</button></div>
         <p class="small muted">Der Fortschritt wird nur in diesem Browser auf diesem Laptop gespeichert. Bitte ab und zu sichern – und Browserdaten/Verlauf für diese Datei nicht löschen.</p></div>
       <h2>💡 So unterstützen Sie Ihr Kind am besten</h2><div class="card"><ul style="margin:0;padding-left:22px">
@@ -3246,6 +3346,8 @@ const VIEWS = {
     $('#goal').onchange = e => { S.settings.goal = +e.target.value; save(); header(); };
     $('#snd').onchange = e => { S.settings.sound = e.target.checked; save(); };
     $('#voi').onchange = e => { S.settings.voice = e.target.checked; save(); };
+    $('#aread').onchange = e => { S.settings.autoread = e.target.checked; save(); if (e.target.checked) say('Ab jetzt lese ich dir alles vor.'); };
+    $('#bigf').onchange = e => { S.settings.big = e.target.checked; save(); go('parents'); };
     $('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' })); a.download = `mathe-euli-sicherung-${today()}.json`; a.click(); };
     $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const s = JSON.parse(txt); if (!s.topics) throw 0; S = mergeStates(S, s); save(); toast('✅ Sicherung geladen und mit dem aktuellen Stand zusammengeführt'); VIEWS.parents(); } catch (err) { toast('Diese Datei ist keine gültige Sicherung.'); } }); };
     $('#clrm').onclick = () => { if (confirm('Fehler-Kiste wirklich leeren?')) { S.mistakes = []; S.mClear = Date.now(); save(); VIEWS.parents(); } };
