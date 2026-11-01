@@ -337,6 +337,13 @@ body[data-focus] main:has(.keypad){padding-bottom:380px!important}
 /* Erklärungen in Häppchen */
 .later{display:none!important}
 .appear{animation:pop .35s ease}
+/* Mehrfachauswahl */
+.choices.multi{grid-template-columns:1fr;max-width:620px}
+.mopt{text-align:left;font-size:19px;display:flex;gap:12px;align-items:center}
+.mopt::before{content:"";flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--line2);background:#fff}
+.mopt.on{border-color:var(--blue);background:var(--blue-soft);box-shadow:0 4px 0 #84d8ff}
+.mopt.on::before{content:"✓";background:var(--blue);border-color:var(--blue);color:#fff;display:grid;place-items:center;font-weight:900}
+.mopt.picked-ok::before{content:"✓";background:var(--green);border-color:var(--green);color:#fff;display:grid;place-items:center}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7c4dff">
@@ -2544,7 +2551,8 @@ BOOK.boost = { teilbar: 1.8, ggtkgv: 1.5, ganzrech: 1.3, koordinaten: 1.3 };
 }
 
 /* ===== Schularbeits-Niveau (Stufe 4): größere Zahlen, selbst aufschreiben statt ankreuzen, mehrstufige Textaufgaben ===== */
-const gen4 = (id, fns) => { TOPIC[id].gen4 = () => pick(fns)(); };
+const G4 = {};
+const gen4 = (id, fns) => { (G4[id] ||= []).push(...fns); TOPIC[id].gen4 = () => pick(G4[id])(); };
 const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');  // 12 500 statt 12500
 
 gen4('teilbar', [
@@ -2658,11 +2666,95 @@ gen4('koordinaten', [
   () => { const y = rnd(-5, 5), x1 = rnd(-6, -1), x2 = rnd(1, 6), hor = Math.random() < 0.5, A = hor ? [x1, y] : [y, x1], B = hor ? [x2, y] : [y, x2];
     return T({ q: `Wie lang ist die Strecke von <b>A = ${pt(...A)}</b> bis <b>B = ${pt(...B)}</b>? (1 Einheit = 1 cm)`, answer: x2 - x1, unit: 'cm', hints: [hor ? 'Beide Punkte haben dieselbe y-Koordinate → die Strecke ist waagrecht.' : 'Beide Punkte haben dieselbe x-Koordinate → die Strecke ist senkrecht.', `Von ${sg(x1)} bis ${sg(x2)} zählen – über die 0 hinweg!`], steps: [`Von ${sg(x1)} bis 0: ${-x1}, von 0 bis ${x2}: ${x2}`, `${-x1} + ${x2} = <b>${x2 - x1} cm</b>`], traps: [{ v: Math.abs(x2 + x1), msg: 'Über die 0 hinweg zählen – nicht einfach die Zahlen abziehen!' }] }); },
 ]);
+
+/* ===== Aufgabentypen aus den Wissensstraßen A (S. 36–37), B (S. 49) und H „Vernetzte Aufgaben“ (S. 198) ===== */
+const MULTI = (q, opts, hints, steps) => T({ type: 'multi', q, choices: opts.map(o => o[0]), answer: opts.filter(o => o[1]).map(o => o[0]), hints, steps });
+
+gen4('teilbar', [
+  () => { // Nr. 119: Kreuze die richtigen Aussagen an (a | b, a ∤ b)
+    const opts = Array.from({ length: 6 }, () => { const k = pick([4, 5, 6, 7, 9, 11, 13]), yes = Math.random() < 0.5; let n = k * rnd(3, 15) + (yes ? 0 : rnd(1, k - 1)); const neg = Math.random() < 0.35; return [`${k} ${neg ? '∤' : '|'} ${n}`, (n % k === 0) !== neg, k, n]; });
+    if (new Set(opts.map(o => o[0])).size < 6 || !opts.some(o => o[1])) return TOPIC.teilbar.gen4();
+    return MULTI('Kreuze <b>alle richtigen</b> Aussagen an!<br><span class="small muted">| heißt „ist Teiler von“, ∤ heißt „ist kein Teiler von“</span>', opts, ['Rechne bei jeder Aussage: Geht die Division ohne Rest auf?', '„∤“ ist nur dann richtig, wenn ein Rest bleibt.'], opts.map(([t, ok, k, n]) => `${t}: ${n} : ${k} = ${Math.floor(n / k)}${n % k ? ' Rest ' + n % k : ''} → ${ok ? '<b>richtig</b>' : 'falsch'}`)); },
+  () => { // Nr. 122: Wahr oder falsch? (mit Gegenbeispiel)
+    const S2 = [['Jede durch 6 teilbare Zahl ist auch durch 3 teilbar.', true, '6 = 2 · 3 – wer durch 6 teilbar ist, ist auch durch 3 teilbar.'], ['Jede durch 3 teilbare Zahl ist auch durch 6 teilbar.', false, 'Gegenbeispiel: 9 ist durch 3, aber nicht durch 6 teilbar.'],
+      ['Jede durch 4 teilbare Zahl ist gerade.', true, '4 = 2 · 2 – sie ist also auch durch 2 teilbar.'], ['Jede gerade Zahl ist durch 4 teilbar.', false, 'Gegenbeispiel: 6 ist gerade, aber nicht durch 4 teilbar.'],
+      ['Jede durch 9 teilbare Zahl ist auch durch 3 teilbar.', true, '9 = 3 · 3.'], ['Jede durch 3 teilbare Zahl ist auch durch 9 teilbar.', false, 'Gegenbeispiel: 12 ist durch 3, aber nicht durch 9 teilbar.'],
+      ['Jede durch 10 teilbare Zahl ist auch durch 5 teilbar.', true, '10 = 2 · 5.'], ['Jede durch 25 teilbare Zahl endet auf 5.', false, 'Gegenbeispiel: 50 ist durch 25 teilbar, endet aber auf 0.'],
+      ['Jede durch 100 teilbare Zahl ist auch durch 25 teilbar.', true, '100 = 4 · 25.'], ['Jede durch 5 teilbare Zahl ist auch durch 10 teilbar.', false, 'Gegenbeispiel: 15 ist durch 5, aber nicht durch 10 teilbar.']];
+    const [st, w, why] = pick(S2);
+    return CHOICE(`Stimmt diese Behauptung?<br><b>„${st}“</b>`, ['stimmt immer', 'stimmt nicht – es gibt ein Gegenbeispiel'], w ? 'stimmt immer' : 'stimmt nicht – es gibt ein Gegenbeispiel', ['Probiere ein paar Beispiele aus!', 'Eine einzige Zahl, bei der es nicht klappt (Gegenbeispiel), reicht, um eine Behauptung zu widerlegen.'], [why]); },
+  () => { // Nr. 124: Lücken mit | und ∤ (Summen-/Produktregel)
+    const k = pick([4, 6, 13, 15, 12]), a = k * rnd(2, 9), t = rnd(1, 3);
+    if (t === 1) { const b = k * rnd(2, 12); return CHOICE(`Setze <b>|</b> oder <b>∤</b> ein:<br><b>${k} | ${a} und ${k} | ${b} &nbsp;⇒&nbsp; ${k} ☐ ${a + b}</b>`, ['|', '∤'], '|', ['Summenregel: Sind beide Summanden teilbar, dann …'], [`${k} teilt ${a} und ${b} → ${k} teilt auch die Summe ${a + b}: <b>${k} | ${a + b}</b>`]); }
+    if (t === 2) { let b = k * rnd(2, 12) + rnd(1, k - 1); return CHOICE(`Setze <b>|</b> oder <b>∤</b> ein:<br><b>${k} ∤ ${b} und ${k} | ${a} &nbsp;⇒&nbsp; ${k} ☐ (${b} + ${a})</b>`, ['|', '∤'], '∤', ['Summenregel: Ist nur EIN Summand teilbar, dann …'], [`Nur ${a} ist durch ${k} teilbar → die Summe ${a + b} ist <b>nicht</b> teilbar: <b>${k} ∤ ${a + b}</b>`]); }
+    const f = pick([10, 3, 7, 20]); return T({ q: `Ergänze mit der <b>Produktregel</b>:<br><b>${k} | ${a} &nbsp;⇒&nbsp; ${k} | ${a} · ${f} = ☐</b>`, answer: a * f, hints: ['Ist ein Faktor durch ' + k + ' teilbar, dann auch das Produkt.', `${a} · ${f} = ?`], steps: [`${a} · ${f} = <b>${a * f}</b>`, `Weil ${k} | ${a}, gilt auch ${k} | ${a * f}`] }); },
+]);
+
+gen4('primzahlen', [
+  () => { // Nr. 126: Welche Zerlegungen sind richtig?
+    const good = [[21, [3, 7]], [18, [2, 3, 3]], [45, [3, 3, 5]], [91, [7, 13]], [50, [2, 5, 5]], [30, [2, 3, 5]], [28, [2, 2, 7]], [66, [2, 3, 11]]], bad = [[16, [2, 2, 4]], [24, [2, 3, 4]], [36, [2, 3, 6]], [56, [2, 2, 14]], [20, [2, 10]], [40, [2, 2, 10]], [27, [3, 9]], [63, [7, 9]]];
+    const opts = shuffle([...shuffle(good).slice(0, rnd(2, 4)), ...shuffle(bad).slice(0, 6)]).slice(0, 6).map(([n, f]) => [`${n} = ${f.join(' · ')}`, f.every(isPrime)]);
+    if (!opts.some(o => o[1])) return TOPIC.primzahlen.gen4();
+    return MULTI('Kreuze an, welche Zahlen <b>richtig</b> in ihre Primfaktoren zerlegt wurden!', opts, ['Zwei Dinge prüfen: Stimmt das Produkt? Und ist JEDER Faktor eine Primzahl?', '4, 6, 9, 10, 14 sind keine Primzahlen!'], opts.map(([t, ok]) => `${t} → ${ok ? '<b>richtig</b>' : 'falsch (ein Faktor ist keine Primzahl)'}`)); },
+  () => { const [a, b] = pick([[50, 70], [70, 90], [30, 50], [80, 100]]), ps = []; for (let i = a + 1; i < b; i++) if (!isPrime(i)) ps.push(i); const n = pick(ps.filter(x => x % 2 && x % 5));
+    return n ? CHOICE(`Ist <b>${n}</b> eine Primzahl oder eine zusammengesetzte Zahl? Begründe!`, [`zusammengesetzt, weil ${n} = ${primeFactors(n)[0]} · ${n / primeFactors(n)[0]}`, `Primzahl, weil ${n} ungerade ist`, `Primzahl, weil ${n} nicht auf 5 endet`], `zusammengesetzt, weil ${n} = ${primeFactors(n)[0]} · ${n / primeFactors(n)[0]}`, ['Ungerade heißt noch lange nicht Primzahl! Probiere 3, 7, 11, 13.'], [`${n} = ${primeFactors(n)[0]} · ${n / primeFactors(n)[0]} → <b>zusammengesetzt</b>`]) : TOPIC.primzahlen.gen4(); },
+]);
+
+gen4('ggtkgv', [
+  () => { // Nr. 128: ggT von drei Zahlen in einer Sachaufgabe
+    const [a, b, c, g] = pick([[150, 120, 75, 15], [120, 90, 60, 30], [84, 60, 36, 12], [96, 72, 48, 24], [180, 135, 90, 45], [140, 105, 70, 35]]);
+    return T({ q: `Eine Konditorei bekommt <b>${a} Schokokugeln</b>, <b>${b} Zimtsterne</b> und <b>${c} Marmeladeherzen</b>. Sie macht daraus möglichst <b>viele gleiche Packungen</b> – in jeder Packung gleich viele Schokokugeln, gleich viele Zimtsterne und gleich viele Herzen, nichts bleibt übrig. Wie viele Packungen werden es?`, answer: g, unit: 'Packungen',
+      hints: ['Die Anzahl der Packungen muss alle drei Zahlen ohne Rest teilen → ggT von drei Zahlen!', `${a} = ${primeFactors(a).join('·')}, ${b} = ${primeFactors(b).join('·')}, ${c} = ${primeFactors(c).join('·')}`],
+      steps: [`ggT(${a}, ${b}, ${c}) = ${g}`, `→ <b>${g} Packungen</b> mit je ${a / g} Schokokugeln, ${b / g} Zimtsternen und ${c / g} Herzen`] }); },
+  () => { // Nr. 129: Busse zwischen zwei Uhrzeiten
+    const [a, b] = pick([[8, 12], [6, 10], [10, 15], [12, 18], [9, 12]]), k = lcm(a, b), start = pick([[5, 30], [6, 0], [6, 15], [7, 0]]), dur = pick([150, 180, 210, 240]), n = Math.floor(dur / k) + 1;
+    const tm = m => { const t = start[0] * 60 + start[1] + m; return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+    return T({ q: `Ab <b>${tm(0)} Uhr</b> fährt alle <b>${a} Minuten</b> ein Bus der Linie A und alle <b>${b} Minuten</b> ein Bus der Linie B ab. Wie oft fahren beide Busse zwischen ${tm(0)} Uhr und ${tm(dur)} Uhr <b>gleichzeitig</b> ab (${tm(0)} Uhr mitgezählt)?`, answer: n, unit: 'mal',
+      hints: [`Gleichzeitig alle kgV(${a}, ${b}) Minuten.`, `kgV(${a}, ${b}) = ${k}. Zähle: ${tm(0)}, ${tm(k)}, ${tm(2 * k)}, …`], steps: [`kgV(${a}, ${b}) = ${k} Minuten`, `Zeiten: ${Array.from({ length: n }, (_, i) => tm(i * k)).join(', ')}`, `→ <b>${n}-mal</b>`] }); },
+  () => { // Nr. 130: Freunde im Kaffeehaus
+    const n = pick([4, 5, 6]), k = Array.from({ length: n }, (_, i) => i + 1).reduce(lcm);
+    return T({ q: `${n} Freunde gehen ins Schwimmbad: der erste jeden Tag, der zweite jeden 2. Tag, der dritte jeden 3. Tag${n > 3 ? ', … der ' + n + '. jeden ' + n + '. Tag' : ''}. Heute waren alle da. In wie vielen Tagen sind <b>alle wieder gleichzeitig</b> dort?`, answer: k, unit: 'Tagen',
+      hints: [`Gesucht ist das kgV(1, 2, …, ${n}).`, 'Tipp: Wenn eine Zahl durch 4 teilbar ist, ist sie auch durch 2 teilbar – du brauchst also nicht alle Zahlen.'], steps: [`kgV(${Array.from({ length: n }, (_, i) => i + 1).join(', ')}) = <b>${k}</b>`], traps: [{ v: Array.from({ length: n }, (_, i) => i + 1).reduce((a, b) => a * b), msg: 'Das Produkt aller Zahlen ist ein gemeinsames Vielfaches – aber nicht das kleinste!' }] }); },
+  () => { // Nr. 131: Baumreihen
+    const [a, b, L] = pick([[15, 18, 180], [12, 16, 144], [10, 15, 120], [20, 30, 180], [8, 12, 96]]), k = lcm(a, b), ask = pick(['m', 'nr']);
+    return T({ q: `Zwei Baumreihen sind ${L} m lang. In der ersten Reihe stehen die Bäume alle <b>${a} m</b>, in der zweiten alle <b>${b} m</b>. Die ersten Bäume stehen einander genau gegenüber. ${ask === 'm' ? 'Nach wie vielen Metern stehen einander <b>wieder</b> zwei Bäume gegenüber?' : `Der <b>wievielte Baum</b> der ersten Reihe ist das (der erste Baum zählt als 1.)?`}`, answer: ask === 'm' ? k : k / a + 1, unit: ask === 'm' ? 'm' : '. Baum',
+      hints: [`Wieder gegenüber nach kgV(${a}, ${b}) Metern.`, ask === 'm' ? `Vielfache von ${a}: ${a}, ${2 * a}, ${3 * a}, … von ${b}: ${b}, ${2 * b}, …` : `kgV = ${k} m. Wie viele Abstände von ${a} m sind das? Dann +1, weil der erste Baum bei 0 m steht.`],
+      steps: [`kgV(${a}, ${b}) = ${k} m`, ...(ask === 'nr' ? [`${k} : ${a} = ${k / a} Abstände → der <b>${k / a + 1}. Baum</b>`] : [`→ nach <b>${k} m</b>`])], traps: ask === 'nr' ? [{ v: k / a, msg: 'Fast! Der erste Baum steht bei 0 m – zähle ihn mit (+1).' }] : [] }); },
+]);
+
+gen4('ganz', [
+  () => { // Nr. 185: Kontostände
+    const M = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'], v = M.map(() => pick([-1, 1, 1]) * rnd(1, 90) * (Math.random() < .5 ? 1 : 3)), neg = v.filter(x => x < 0).length, ask = pick(['neg', 'min']);
+    if (!neg) return TOPIC.ganz.gen4();
+    return T({ q: `Kontostand von Herrn Krami am 1. jedes Monats:<table class="tbl"><tr>${M.map(m => `<th>${m}</th>`).join('')}</tr><tr>${v.map(x => `<td>${sg(x)}&nbsp;€</td>`).join('')}</tr></table>${ask === 'neg' ? 'An <b>wie vielen</b> Monatsersten hatte er <b>Schulden</b>?' : 'Wie hoch war der <b>niedrigste</b> Kontostand?'}`, answer: ask === 'neg' ? neg : Math.min(...v), unit: ask === 'neg' ? 'Monate' : '€',
+      hints: [ask === 'neg' ? 'Schulden = negativer Kontostand (mit Minus).' : 'Der niedrigste Kontostand ist die kleinste Zahl – bei negativen Zahlen die mit dem größten Betrag nach dem Minus.'], steps: [ask === 'neg' ? `Negativ: ${v.filter(x => x < 0).map(x => sg(x) + ' €').join(', ')} → <b>${neg}</b>` : `Aufsteigend geordnet beginnt es mit <b>${sg(Math.min(...v))} €</b>`] }); },
+  () => { // Nr. 186: Welche Rechnung ist dargestellt?
+    const a = rnd(-6, 8), k = rnd(3, 9) * pick([1, -1]), b = a + k;
+    if (b < -10 || b > 10 || a === 0) return TOPIC.ganz.gen4();
+    const right = `${sg(a)} ${k < 0 ? '−' : '+'} ${Math.abs(k)}`;
+    return CHOICE('Welche Rechnung ist auf der Zahlengeraden dargestellt?', shuffle([right, `${sg(a)} ${k < 0 ? '+' : '−'} ${Math.abs(k)}`, `${sg(b)} ${k < 0 ? '−' : '+'} ${Math.abs(k)}`, `${sg(-a)} ${k < 0 ? '−' : '+'} ${Math.abs(k)}`].filter((x, i, A) => A.indexOf(x) === i)), right, ['Wo beginnt der Pfeil? Das ist die erste Zahl.', 'Geht der Pfeil nach rechts (+) oder nach links (−)?'], [`Start bei ${sg(a)}, ${Math.abs(k)} Schritte nach ${k < 0 ? 'links' : 'rechts'} → <b>${right} = ${sg(b)}</b>`], { visual: svgNumLine({ min: -10, max: 10, jump: [a, b] }) }); },
+]);
+
+gen4('ganzrech', [
+  () => { // Nr. 189: Flohmarkt – Gewinn oder Verlust pro Person
+    const p = pick([2, 3, 4]), loss = Math.random() < 0.6, cost = rnd(20, 40), mat = rnd(10, 25), per = rnd(1, 6) * (loss ? -1 : 1), ein = cost + mat + per * p;
+    if (ein <= 0) return TOPIC.ganzrech.gen4();
+    return T({ q: `${p} Kinder verkaufen am Flohmarkt Bastelsachen und nehmen insgesamt <b>${ein} €</b> ein. Sie zahlen <b>${cost} €</b> Standgebühr, das Material hat <b>${mat} €</b> gekostet. Wie hoch ist der Gewinn (+) bzw. Verlust (−) <b>pro Kind</b>?`, answer: per, unit: '€',
+      hints: [`Gesamt: ${ein} − ${cost} − ${mat} = ?`, `Dann durch ${p} Kinder teilen. Ist das Ergebnis negativ, ist es ein Verlust.`], steps: [`${ein} − ${cost} − ${mat} = ${sg(per * p)} € (${per < 0 ? 'Verlust' : 'Gewinn'})`, `${sg(per * p)} € : ${p} = <b>${sg(per)} €</b> pro Kind`], traps: [{ v: -per, msg: 'Gewinn oder Verlust? Prüfe das Vorzeichen!' }, { v: per * p, msg: `Das ist der Betrag für alle zusammen – jetzt noch durch ${p} teilen!` }] }); },
+  () => { // Nr. 188: Kreuze die richtigen Aussagen an (Temperaturen)
+    const mk = () => { const t0 = rnd(-9, 15), d = rnd(2, 20), kind = rnd(1, 3); let res;
+      if (kind === 1) { res = t0 - d; const sh = Math.random() < 0.5 ? res : -res === res ? res + 2 : -res; return [`Wenn es ${sg(t0)} °C hat und die Temperatur um ${d} °C fällt, dann hat es ${sg(sh)} °C.`, sh === res]; }
+      if (kind === 2) { res = t0 + d; const sh = Math.random() < 0.5 ? res : res - 2 * Math.min(d, 3); return [`Wenn es ${sg(t0)} °C hat und die Temperatur um ${d} °C steigt, dann hat es ${sg(sh)} °C.`, sh === res]; }
+      const t1 = t0 + d, sh = Math.random() < 0.5 ? d : Math.abs(t1 + t0) === d ? d + 2 : Math.abs(t1 + t0); return [`Wenn es ${sg(t0)} °C hat und die Temperatur auf ${sg(t1)} °C steigt, ist der Temperaturunterschied ${sh} °C.`, sh === d]; };
+    const opts = Array.from({ length: 5 }, mk);
+    if (!opts.some(o => o[1]) || new Set(opts.map(o => o[0])).size < 5) return TOPIC.ganzrech.gen4();
+    return MULTI('Kreuze <b>alle richtigen</b> Aussagen an!', opts, ['Rechne jede Aussage auf der Zahlengeraden (am Thermometer) nach.', 'Fällt = minus, steigt = plus. Temperaturunterschied: über die 0 hinweg zählen!'], opts.map(([t, ok]) => `${t} → ${ok ? '<b>richtig</b>' : 'falsch'}`)); },
+]);
 </script>
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '01.11.2026 08:40';
+const APP_VER = '01.11.2026 08:47';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2991,6 +3083,7 @@ function go(view, ...args) {
 
 /* ---------- Aufgaben-Komponente ---------- */
 function answerHTML(t) {
+  if (t.type === 'multi') return `<div class="choices multi">${t.choices.map(c => `<button class="choice mopt" data-m="${esc(c)}">${c}</button>`).join('')}</div><div class="small muted" style="width:100%;text-align:center">Es können mehrere Antworten richtig sein.</div>`;
   if (t.type === 'choice') return `<div class="choices">${t.choices.map(c => `<button class="choice" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
   if (t.type === 'prod') return `<span>${t.pre} =</span><input class="ans" data-p autocomplete="off" style="width:min(300px,58vw);text-align:left" aria-label="Faktoren mit Malpunkt getrennt">`;
   if (t.type === 'set') return `<span>${t.setPre}</span><input class="ans" data-s autocomplete="off" style="width:min(380px,62vw);text-align:left" aria-label="Zahlen mit Beistrich getrennt"><span>${t.setPost || '}'}</span>`;
@@ -3003,11 +3096,18 @@ const fmtS = x => x < 0 ? '−' + fmt(-x) : fmt(x);
 const answerText = t => t.type === 'frac' ? FA(t.answer) : t.type === 'num' ? `${t.pre ? t.pre + ' ' : ''}${fmtS(t.answer)} ${t.unit || ''}`
   : t.type === 'set' ? (t.ordered ? t.answer.map(fmtS).join(' &lt; ') : `{${t.answer.map(fmtS).join(', ')}${t.setPost ? ', …' : ''}}`)
   : t.type === 'prod' ? `${t.pre} = ${t.answer.join(' · ')}`
+  : t.type === 'multi' ? t.answer.join(' &nbsp;·&nbsp; ')
   : t.type === 'point' || t.type === 'grid' ? pt(...t.answer) : t.type === 'line' ? (t.answerHTML || fmtS(t.answer)) : esc(t.answer);
 const SWAP = 'Vertauscht! Zuerst kommt x (nach rechts/links), dann y (nach oben/unten).';
 
 function evaluate(t, box, picked) {
   if (t.type === 'choice') return { ok: picked === t.answer, trap: t.traps.find(x => x.v === picked) };
+  if (t.type === 'multi') {
+    const on = $$('.mopt.on', box).map(b => b.dataset.m); if (!on.length) return { empty: true, msg: 'Tippe zuerst die richtigen Aussagen an ✔️' };
+    const miss = t.answer.filter(a => !on.includes(a)).length, wrong = on.filter(a => !t.answer.includes(a)).length;
+    if (!miss && !wrong) return { ok: true };
+    return { ok: false, trap: { msg: [wrong ? `${wrong} ${wrong === 1 ? 'Aussage ist' : 'Aussagen sind'} falsch angekreuzt.` : '', miss ? `${miss} richtige ${miss === 1 ? 'fehlt' : 'fehlen'} noch.` : ''].filter(Boolean).join(' ') + ' Prüf jede Aussage einzeln!' } };
+  }
   if (t.type === 'set') {
     const raw = $('[data-s]', box).value.trim(); if (!raw) return { empty: true };
     const vals = raw.replace(/[{}]/g, '').split(/[;,\s]+/).filter(Boolean).map(parseNum);
@@ -3106,6 +3206,7 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
     const xp = ok ? (tries === 0 ? (hints ? 6 : 10) : 4) : 1;
     inputs.forEach(i => i.disabled = true); $$('.choice', box).forEach(b => b.disabled = true); kp?.remove();
     if (pickBox) drawPick({ good: t.answer });
+    if (t.type === 'multi') $$('.mopt', box).forEach(b => { const right = t.answer.includes(b.dataset.m); if (right) b.classList.add('picked-ok'); else if (b.classList.contains('on')) b.classList.add('picked-bad'); });
     $('[data-acts]', box).innerHTML = `<button class="btn go big wide" data-next>${nextLabel}</button>`;
     $('[data-next]', box).onclick = () => onNext && onNext();
     setTimeout(() => $('[data-next]', box)?.focus(), 60);
@@ -3138,7 +3239,8 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
       <div>✅ Richtige Antwort: <b>${answerText(t)}</b></div><div class="small muted" style="margin-top:6px">Diese Aufgabe kommt in deine Fehler-Kiste – du bekommst bald eine Chance, sie zu knacken. 💪</div>`;
   };
   $('[data-check]', box)?.addEventListener('click', () => check(pickBox ? sel : undefined));
-  $$('.choice', box).forEach(b => b.onclick = () => check(b.dataset.c));
+  if (t.type === 'multi') $$('.mopt', box).forEach(b => b.onclick = () => { if (!done) { b.classList.toggle('on'); buzz(8); } });
+  else $$('.choice', box).forEach(b => b.onclick = () => check(b.dataset.c));
   inputs.forEach((i, k) => i.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return; e.preventDefault();
     if ((t.type === 'frac' || t.type === 'point') && k === 0 && !inputs[1].value) return inputs[1].focus();
@@ -3199,7 +3301,11 @@ const PAPER = [
   ['🔷', 'Im Koordinatensystem eine <b>Figur zeichnen</b>: A(−3|−2), B(3|−2), C(3|2), D(−3|2) verbinden – welche Figur ist das?', 'S. 183–186'],
   ['🗼', '<b>Primfaktorzerlegung</b> von 2 Zahlen als Rechenturm aufschreiben und damit ggT und kgV bestimmen', 'S. 30–32'],
   ['✍️', '<b>Teilermenge</b> von 2 Zahlen mit Teilerpaaren sauber anschreiben: T₃₆ = {…}', 'S. 18–22'],
-  ['🛣️', '<b>Wissensstraße</b> am Ende von Kapitel A, B oder H rechnen – Lösungen stehen im Buch', 'Kapitelende'],
+  ['💬', '<b>Begründen</b> üben (kommt oft!): Warum ist 4 599 durch 9 teilbar – mit der Teilbarkeitsregel, der Summenregel und der Produktregel? Laut erklären, dann aufschreiben', 'Nr. 120, 123'],
+  ['📍', 'Winkel im Koordinatensystem: S = (2|3), A = (8|1), B = (4|7). Zeichne ∢ab mit Scheitel S (Schenkel a durch A, b durch B) und miss ihn', 'Nr. 773'],
+  ['🏔️', 'Winkel zeichnen und zu einem Bild erweitern: Skipiste 20°, Damm 50°, Feuerwehrleiter 75°', 'Nr. 768'],
+  ['📏', 'Zahlen auf einer <b>passenden Zahlengeraden</b> einzeichnen: −10, −12, −8, −9 (gut überlegen, wo die Gerade beginnt!) und 4 − 7 mit Pfeilen darstellen', 'Nr. 184, 187'],
+  ['🛣️', '<b>Wissensstraße</b> A (S. 36–37), B (S. 49) und H durchrechnen – Lösungen stehen im Buch', 'Kapitelende'],
 ];
 function examCard() {
   const e = examInfo(); if (!e) return '';
