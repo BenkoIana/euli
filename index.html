@@ -344,6 +344,18 @@ body[data-focus] main:has(.keypad){padding-bottom:380px!important}
 .mopt.on{border-color:var(--blue);background:var(--blue-soft);box-shadow:0 4px 0 #84d8ff}
 .mopt.on::before{content:"✓";background:var(--blue);border-color:var(--blue);color:#fff;display:grid;place-items:center;font-weight:900}
 .mopt.picked-ok::before{content:"✓";background:var(--green);border-color:var(--green);color:#fff;display:grid;place-items:center}
+/* Handy: Zeichnung und Zahlentastatur passen gemeinsam auf den Bildschirm */
+@media (max-width:760px){
+  .key{height:44px;font-size:22px}
+  .keypad{gap:6px;margin-bottom:10px}
+  .practice-task .visual svg{max-height:34vh;width:auto}
+  .practice-task .visual{margin:8px 0}
+  .practice-task .answer-area{margin:12px 0}
+}
+.keypad.kp2{grid-template-columns:repeat(7,1fr);gap:5px;max-width:520px}
+.keypad.kp2 .key{height:44px;font-size:20px;padding:0}
+body[data-focus] main:has(.kp2){padding-bottom:250px!important}
+@media (max-width:760px) and (max-height:700px){.practice-task .visual svg{max-height:27vh}.task .q{font-size:20px;line-height:1.4}}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7c4dff">
@@ -594,7 +606,7 @@ function svgCoord({ min = -6, max = 6, pts = [], sel = null, good = null, size =
   let g = '';
   for (let i = min; i <= max; i++) {
     g += `<line x1="${X(i)}" y1="${Y(min)}" x2="${X(i)}" y2="${Y(max)}" stroke="#e6def3"/><line x1="${X(min)}" y1="${Y(i)}" x2="${X(max)}" y2="${Y(i)}" stroke="#e6def3"/>`;
-    if (i) g += `<text x="${X(i)}" y="${Y(Math.max(min, 0)) + 15}" font-size="11" text-anchor="middle" fill="#7a7090">${sg(i)}</text><text x="${X(Math.max(min, 0)) - 5}" y="${Y(i) + 4}" font-size="11" text-anchor="end" fill="#7a7090">${sg(i)}</text>`;
+    if (i) g += `<text x="${X(i)}" y="${Y(Math.max(min, 0)) + 15}" font-size="13" font-weight="700" text-anchor="middle" fill="#5f5878">${sg(i)}</text><text x="${X(Math.max(min, 0)) - 5}" y="${Y(i) + 4}" font-size="13" font-weight="700" text-anchor="end" fill="#5f5878">${sg(i)}</text>`;
   }
   const ox = X(Math.max(min, 0)), oy = Y(Math.max(min, 0));
   g += `<line x1="${X(min)}" y1="${oy}" x2="${X(max) + 12}" y2="${oy}" stroke="${hl === 'x' ? '#ff7a6b' : '#2b2340'}" stroke-width="${hl === 'x' ? 4 : 2}"/><line x1="${ox}" y1="${Y(min)}" x2="${ox}" y2="${Y(max) - 12}" stroke="${hl === 'y' ? '#ff7a6b' : '#2b2340'}" stroke-width="${hl === 'y' ? 4 : 2}"/>
@@ -2649,7 +2661,7 @@ gen4('parallelwinkel', [
   () => { const a = rnd(3, 12) * 5, b = rnd(3, 12) * 5; if (a + b >= 170) return TOPIC.parallelwinkel.gen4();
     return T({ q: `Drei Geraden schneiden einander in <b>einem</b> Punkt. Nebeneinander liegen die Winkel α = ${a}°, β = ${b}° und γ – zusammen bilden sie einen <b>gestreckten Winkel</b>. Wie groß ist γ?`, answer: 180 - a - b, unit: '°', hints: ['Ein gestreckter Winkel hat 180°.', `γ = 180° − ${a}° − ${b}°`], steps: [`α + β + γ = 180°`, `γ = 180° − ${a}° − ${b}° = <b>${180 - a - b}°</b>`] }); },
   () => { const a = rnd(4, 16) * 5, ask = pick(['β', 'γ', 'δ']), v = ask === 'γ' ? a : 180 - a;
-    return T({ q: `Zwei Geraden schneiden einander. α = ${a}°. β ist der Nebenwinkel von α, γ liegt α gegenüber (Scheitelwinkel), δ ist der Nebenwinkel von γ. Wie groß ist <b>${ask}</b>?`, visual: svgCross(a, ask === 'γ' ? 'γ' : 'β', ask === 'γ' ? 'scheitel' : 'neben'), answer: v, unit: '°', hints: ['Nebenwinkel: zusammen 180°. Scheitelwinkel: gleich groß.', ask === 'δ' ? 'δ ist Nebenwinkel von γ, und γ = α.' : ''].filter(Boolean),
+    return T({ q: `α = ${a}°. β = Nebenwinkel von α, γ = Scheitelwinkel von α, δ = Nebenwinkel von γ. Wie groß ist <b>${ask}</b>?`, visual: svgCross(a, ask === 'γ' ? 'γ' : 'β', ask === 'γ' ? 'scheitel' : 'neben'), answer: v, unit: '°', hints: ['Nebenwinkel: zusammen 180°. Scheitelwinkel: gleich groß.', ask === 'δ' ? 'δ ist Nebenwinkel von γ, und γ = α.' : ''].filter(Boolean),
       steps: [ask === 'γ' ? `γ = α = <b>${a}°</b> (Scheitelwinkel)` : ask === 'β' ? `β = 180° − ${a}° = <b>${180 - a}°</b>` : `γ = α = ${a}°, δ = 180° − ${a}° = <b>${180 - a}°</b>`] }); },
   () => { const d = rnd(2, 8) * 10; return T({ q: `Zwei Nebenwinkel unterscheiden sich um <b>${d}°</b>. Wie groß ist der <b>größere</b> Winkel?`, answer: (180 + d) / 2, unit: '°', hints: ['Nebenwinkel ergeben 180°.', `(180° + ${d}°) : 2`], steps: [`kleiner: (180° − ${d}°) : 2 = ${(180 - d) / 2}°`, `größer: ${(180 - d) / 2}° + ${d}° = <b>${(180 + d) / 2}°</b>`] }); },
 ]);
@@ -2750,11 +2762,54 @@ gen4('ganzrech', [
     if (!opts.some(o => o[1]) || new Set(opts.map(o => o[0])).size < 5) return TOPIC.ganzrech.gen4();
     return MULTI('Kreuze <b>alle richtigen</b> Aussagen an!', opts, ['Rechne jede Aussage auf der Zahlengeraden (am Thermometer) nach.', 'Fällt = minus, steigt = plus. Temperaturunterschied: über die 0 hinweg zählen!'], opts.map(([t, ok]) => `${t} → ${ok ? '<b>richtig</b>' : 'falsch'}`)); },
 ]);
+
+/* ===== Aufgabentypen aus der Wissensstraße H (S. 200–201) ===== */
+function svgAngleNamed(d, [S, A, B]) {  // Winkel mit Scheitel S, A auf dem waagrechten Schenkel, B auf dem gedrehten Schenkel
+  const W = 320, H = 200, sx = d > 100 ? 210 : 70, sy = 165, r = d * Math.PI / 180, L2 = 150;
+  const ex = sx + L2 * Math.cos(r), ey = sy - L2 * Math.sin(r), bx = sx + 110 * Math.cos(r), by = sy - 110 * Math.sin(r), ax = Math.min(W - 30, sx + 110);
+  const ar = 38, m = r / 2;
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><line x1="${sx}" y1="${sy}" x2="${W - 8}" y2="${sy}" stroke="#2b2340" stroke-width="3"/><line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="#2b2340" stroke-width="3"/>
+    <path d="M${sx + ar},${sy} A${ar},${ar} 0 0 0 ${sx + ar * Math.cos(r)},${sy - ar * Math.sin(r)}" fill="none" stroke="#ff4b4b" stroke-width="3"/><text x="${sx + 58 * Math.cos(m)}" y="${sy - 58 * Math.sin(m) + 6}" text-anchor="middle" font-size="20" font-weight="900" fill="#ff4b4b">α</text>
+    <circle cx="${ax}" cy="${sy}" r="4"/><circle cx="${bx}" cy="${by}" r="4"/><circle cx="${sx}" cy="${sy}" r="4"/>
+    <text x="${sx - 8}" y="${sy + 22}" font-size="19" font-weight="900">${S}</text><text x="${ax}" y="${sy + 24}" font-size="19" font-weight="900" text-anchor="middle">${A}</text><text x="${bx - 22}" y="${by - 4}" font-size="19" font-weight="900">${B}</text></svg>`;
+}
+
+gen4('winkel', [
+  () => { // Nr. 778: Winkel mit Hilfe der Punkte aufschreiben
+    const P = pick([['K', 'L', 'M'], ['S', 'A', 'B'], ['P', 'Q', 'R'], ['D', 'E', 'F']]), d = rnd(5, 30) * 5, [S, A, B] = P, right = `∢${A}${S}${B}`;
+    return CHOICE('Wie schreibt man den Winkel α mit Hilfe der <b>Punkte</b>?', shuffle([right, `∢${B}${S}${A}`, `∢${S}${A}${B}`, `∢${A}${B}${S}`]), right,
+      ['Der Scheitel steht immer in der MITTE.', `Gedreht wird gegen den Uhrzeigersinn: vom Schenkel durch ${A} zum Schenkel durch ${B}.`], [`Scheitel ${S} in die Mitte`, `gegen den Uhrzeigersinn von ${A} nach ${B} → <b>${right}</b>`], { visual: svgAngleNamed(d, P), traps: [{ v: `∢${B}${S}${A}`, msg: 'Fast! Aber die Richtung stimmt nicht: Winkel werden GEGEN den Uhrzeigersinn angegeben.' }] }); },
+  () => { // Nr. 778: Schätzen
+    const d = rnd(4, 32) * 5, P = pick([['K', 'L', 'M'], ['S', 'A', 'B']]), opts = [...new Set([d, d + 30, Math.max(10, d - 30), d < 90 ? d + 60 : d - 60])];
+    return CHOICE('<b>Schätze</b>: Wie groß ist der Winkel α ungefähr?', shuffle(opts.map(x => x + '°')), d + '°', ['Vergleiche mit 90° (Ecke eines Blattes) und 45° (halbe Ecke).', d < 90 ? 'α ist kleiner als ein rechter Winkel.' : 'α ist größer als ein rechter Winkel.'], [`α ≈ <b>${d}°</b>`, 'Im Heft: mit dem Geodreieck nachmessen!'], { visual: svgAngleNamed(d, P) }); },
+]);
+
+const FIGS_H = [  // Figuren im Koordinatensystem (wie Nr. 780)
+  [[-3, -4], [-1, -4], [0, -1], [1, -4], [3, -4], [1, 3], [-1, 3]],                // „A“-Form
+  [[-4, -3], [2, -3], [2, 1], [-1, 4], [-4, 1]],                                   // Haus
+  [[-5, -1], [1, -1], [1, -3], [5, 0], [1, 3], [1, 1], [-5, 1]],                    // Pfeil
+  [[-3, -5], [3, -5], [3, -2], [1, -2], [1, 4], [-1, 4], [-1, -2], [-3, -2]],     // „T“ auf dem Kopf
+];
+gen4('koordinaten', [
+  () => { const f = pick(FIGS_H), dx = rnd(-1, 1), dy = rnd(-1, 1), pts = f.map(([x, y], i) => ({ x: x + dx, y: y + dy, label: 'ABCDEFGH'[i] })), k = rnd(0, pts.length - 1), P = pts[k];
+    if (pts.some(p => Math.abs(p.x) > 6 || Math.abs(p.y) > 6)) return TOPIC.koordinaten.gen4();
+    return T({ type: 'point', pre: `${P.label} =`, q: `Schreibe die Koordinaten des Eckpunkts <b>${P.label}</b> der Figur auf.`, visual: svgCoord({ min: -6, max: 6, pts, poly: pts.map(p => [p.x, p.y]), size: 320 }), answer: [P.x, P.y],
+      hints: ['Zuerst x (nach rechts/links), dann y (nach oben/unten).', `Von ${P.label} gerade nach unten bzw. oben zur x-Achse schauen: Welche Zahl steht dort?`], steps: [`x = ${sg(P.x)}, y = ${sg(P.y)}`, `<b>${P.label} = ${pt(P.x, P.y)}</b>`] }); },
+  () => { // Nr. 781: Wo liegt der Punkt?
+    const k = rnd(0, 5), v = () => rnd(1, 9), [x, y] = [[v(), 0], [0, v() * pick([1, -1])], [v(), v()], [-v(), v()], [-v(), -v()], [v(), -v()]][k];
+    const X = k === 0 && Math.random() < 0.5 ? -x : x, O = ['auf der x-Achse', 'auf der y-Achse', 'im 1. Quadranten', 'im 2. Quadranten', 'im 3. Quadranten', 'im 4. Quadranten'];
+    return CHOICE(`Wo liegt der Punkt <b>${pt(X, y)}</b>?`, O, O[k], ['Ist eine Koordinate 0? Dann liegt der Punkt auf einer Achse!', 'x = 0 → auf der y-Achse · y = 0 → auf der x-Achse. Sonst: Vorzeichen anschauen.'], [k < 2 ? `${k === 0 ? 'y' : 'x'} = 0 → <b>${O[k]}</b>` : `x ${X < 0 ? 'negativ' : 'positiv'}, y ${y < 0 ? 'negativ' : 'positiv'} → <b>${O[k]}</b>`], { traps: [{ v: k === 0 ? O[1] : k === 1 ? O[0] : '', msg: 'Verwechselt! Liegt ein Punkt auf der x-Achse, ist seine y-Koordinate 0 (er ist weder oben noch unten).' }] }); },
+  () => { // Nr. 783: Punkt verschieben
+    const x = rnd(-4, 4), y = rnd(-4, 4), r = rnd(-3, 3) || 2, u = rnd(-4, 4) || -3, ans = [x + r, y + u];
+    const dir = (n, a, b) => `${Math.abs(n)} ${Math.abs(n) === 1 ? 'Einheit' : 'Einheiten'} nach ${n > 0 ? a : b}`;
+    return T({ type: 'point', pre: 'A′ =', q: `Verschiebe den Punkt <b>A = ${pt(x, y)}</b> um <b>${dir(r, 'rechts', 'links')}</b> und <b>${dir(u, 'oben', 'unten')}</b>. Gib die Koordinaten von A′ an.`, answer: ans,
+      hints: ['Rechts/links ändert nur x, oben/unten ändert nur y.', `x: ${sg(x)} ${r > 0 ? '+' : '−'} ${Math.abs(r)}, y: ${sg(y)} ${u > 0 ? '+' : '−'} ${Math.abs(u)}`], steps: [`x: ${sg(x)} ${r > 0 ? '+' : '−'} ${Math.abs(r)} = ${sg(x + r)}`, `y: ${sg(y)} ${u > 0 ? '+' : '−'} ${Math.abs(u)} = ${sg(y + u)}`, `<b>A′ = ${pt(...ans)}</b>`], traps: [{ p: [x + u, y + r], msg: 'Vertauscht: Rechts/links gehört zu x, oben/unten zu y!' }] }); },
+]);
 </script>
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '01.11.2026 08:47';
+const APP_VER = '01.11.2026 08:57';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -3255,7 +3310,10 @@ const buzz = p => { if (S.settings.sound) try { navigator.vibrate?.(p); } catch 
 function keypadHTML(t) {
   if (!TOUCH || !['num', 'frac', 'set', 'point', 'prod'].includes(t.type || 'num')) return '';
   const multi = t.type === 'frac' || t.type === 'point', K = (k, l = k, c = '') => `<button type="button" class="key ${c}" data-k="${k}" aria-label="${l}">${l}</button>`;
-  return `<div class="keypad" data-kp>${['1', '2', '3'].map(x => K(x)).join('')}${K('del', '⌫', 'fn')}${['4', '5', '6'].map(x => K(x)).join('')}${t.type === 'prod' ? K('·', '·', 'fn') : K('−', '−', 'fn')}${['7', '8', '9'].map(x => K(x)).join('')}${t.type === 'prod' ? K('²', 'x²', 'fn') : K(',', ',', 'fn')}${K('0', '0', multi ? 'w3' : 'w4')}${multi ? K('next', t.type === 'frac' ? '⇅' : '⇥', 'fn') : ''}</div>`;
+  const op = t.type === 'prod' ? K('·', '·', 'fn') : K('−', '−', 'fn'), sep = t.type === 'prod' ? K('²', 'x²', 'fn') : K(',', ',', 'fn'), nx = multi ? K('next', t.type === 'frac' ? '⇅' : '⇥', 'fn') : '';
+  // mit Zeichnung: flache Tastatur in 2 Reihen, damit die Zeichnung sichtbar bleibt
+  if (t.visual) return `<div class="keypad kp2" data-kp>${['1', '2', '3', '4', '5'].map(x => K(x)).join('')}${sep}${K('del', '⌫', 'fn')}${['6', '7', '8', '9', '0'].map(x => K(x)).join('')}${op}${nx || K(' ', '␣', 'fn')}</div>`;
+  return `<div class="keypad" data-kp>${['1', '2', '3'].map(x => K(x)).join('')}${K('del', '⌫', 'fn')}${['4', '5', '6'].map(x => K(x)).join('')}${op}${['7', '8', '9'].map(x => K(x)).join('')}${sep}${K('0', '0', multi ? 'w3' : 'w4')}${nx}</div>`;
 }
 function makeTask(topicId, level) { const T0 = TOPIC[topicId], t = level === 4 && T0.gen4 ? T0.gen4() : T0.gen(Math.min(level, 3)); t.topic = topicId; t.level = level === 4 && T0.gen4 ? 4 : Math.min(level, 3); return t; }
 
@@ -3303,6 +3361,7 @@ const PAPER = [
   ['✍️', '<b>Teilermenge</b> von 2 Zahlen mit Teilerpaaren sauber anschreiben: T₃₆ = {…}', 'S. 18–22'],
   ['💬', '<b>Begründen</b> üben (kommt oft!): Warum ist 4 599 durch 9 teilbar – mit der Teilbarkeitsregel, der Summenregel und der Produktregel? Laut erklären, dann aufschreiben', 'Nr. 120, 123'],
   ['📍', 'Winkel im Koordinatensystem: S = (2|3), A = (8|1), B = (4|7). Zeichne ∢ab mit Scheitel S (Schenkel a durch A, b durch B) und miss ihn', 'Nr. 773'],
+  ['🅰️', 'Wissensstraße H: die Winkel α und β aus Nr. 778 benennen, schätzen und messen; die „A“-Figur aus Nr. 780 abzeichnen und alle Eckpunkte anschreiben; Nr. 784 (Winkel aus Punkten zeichnen und messen)', 'S. 200–201'],
   ['🏔️', 'Winkel zeichnen und zu einem Bild erweitern: Skipiste 20°, Damm 50°, Feuerwehrleiter 75°', 'Nr. 768'],
   ['📏', 'Zahlen auf einer <b>passenden Zahlengeraden</b> einzeichnen: −10, −12, −8, −9 (gut überlegen, wo die Gerade beginnt!) und 4 − 7 mit Pfeilen darstellen', 'Nr. 184, 187'],
   ['🛣️', '<b>Wissensstraße</b> A (S. 36–37), B (S. 49) und H durchrechnen – Lösungen stehen im Buch', 'Kapitelende'],
