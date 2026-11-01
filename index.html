@@ -8,179 +8,312 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
 <style>
+/* ===== Mathe mit Euli – Design: kräftige Farben, 3D-Knöpfe, klare Karten (nach dem Vorbild moderner Lern-Apps) ===== */
 :root{
-  --bg:#fff8ef; --card:#ffffff; --ink:#2b2340; --muted:#7a7090; --line:#ece4f5;
-  --pri:#7c4dff; --pri2:#a685ff; --pri-soft:#efe8ff;
-  --ok:#16a34a; --ok-soft:#e3f8ea; --warn:#f59e0b; --warn-soft:#fff3d6;
-  --bad:#e5484d; --bad-soft:#ffe8e8; --teal:#14b8a6; --coral:#ff7a6b; --sun:#ffc93c;
+  --bg:#f7f5ff; --card:#ffffff; --ink:#2b2340; --muted:#77708f; --line:#e7e2f3; --line2:#d9d2ec;
+  --pri:#7c4dff; --pri-d:#5b2fd6; --pri2:#a685ff; --pri-soft:#efe8ff;
+  --green:#58cc02; --green-d:#46a302; --ok:#46a302; --ok-soft:#e9fbd9;
+  --blue:#1cb0f6; --blue-d:#1899d6; --blue-soft:#ddf4ff;
+  --red:#ff4b4b; --red-d:#ea2b2b; --bad:#ea2b2b; --bad-soft:#ffe5e5;
+  --yellow:#ffc800; --yellow-d:#e5a800; --warn:#f59e0b; --warn-soft:#fff5d6;
+  --orange:#ff9600; --teal:#14b8a6; --coral:#ff7a6b; --sun:#ffc800;
   --c1:#7c4dff; --c2:#ff7a6b; --c3:#14b8a6; --c4:#ffc93c;
-  --r:18px; --shadow:0 4px 0 rgba(60,30,120,.08), 0 10px 30px rgba(60,30,120,.08);
+  --r:20px; --shadow:0 4px 0 var(--line);
+  --nav-h:68px;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:"Nunito","Segoe UI",system-ui,-apple-system,sans-serif;font-size:18px;line-height:1.5;min-height:100vh}
-button{font:inherit;cursor:pointer}
+body{background:var(--bg);color:var(--ink);font-family:"Nunito","Segoe UI",system-ui,-apple-system,sans-serif;font-size:18px;line-height:1.5;min-height:100vh;-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer;color:inherit}
 input{font:inherit}
 .hidden{display:none!important}
 b,strong{font-weight:800}
+::selection{background:var(--pri-soft)}
 
-/* header */
-.top{position:sticky;top:0;z-index:20;background:rgba(255,248,239,.92);backdrop-filter:blur(6px);border-bottom:2px solid var(--line)}
-.top-in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:10px 16px}
-.brand{display:flex;align-items:center;gap:8px;font-weight:900;font-size:20px;color:var(--pri);background:none;border:0;padding:0}
-.brand .owl{font-size:30px}
+/* ---------- Kopfleiste ---------- */
+.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:2px solid var(--line)}
+.top-in{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px 16px;min-height:62px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:900;font-size:21px;color:var(--pri);background:none;border:0;padding:0;letter-spacing:-.2px}
+.brand .euli{flex:none}
 .top .sp{flex:1}
-.pill{display:flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:800;font-size:16px;white-space:nowrap}
-.xpbar{width:90px;height:10px;background:var(--line);border-radius:9px;overflow:hidden}
-.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--pri),var(--pri2));border-radius:9px}
-.avatar-btn{font-size:26px;background:var(--pri-soft);border:2px solid var(--line);border-radius:50%;width:44px;height:44px;display:grid;place-items:center}
+.topnav{display:flex;gap:4px;margin-left:12px}
+.topnav button{border:2px solid transparent;background:none;border-radius:14px;padding:6px 12px;font-weight:800;font-size:16px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.topnav button:hover{background:var(--bg)}
+.topnav button.on{color:var(--blue-d);background:var(--blue-soft);border-color:#84d8ff}
+.pill{display:flex;align-items:center;gap:5px;background:none;border:0;border-radius:12px;padding:4px 8px;font-weight:900;font-size:17px;white-space:nowrap}
+.pill.streak{color:var(--orange)} .pill.goal{color:var(--green-d)} .pill.lvl{color:var(--pri)}
+.pill.streak.off{color:#b9b3c9;filter:grayscale(1)}
+.xpbar{width:70px;height:10px;background:var(--line);border-radius:9px;overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--pri);border-radius:9px}
+.avatar-btn{font-size:24px;background:var(--pri-soft);border:2px solid var(--line2);border-radius:50%;width:44px;height:44px;display:grid;place-items:center;flex:none}
+.parents-btn{cursor:pointer;font-weight:800;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--muted);font-size:15px;padding:5px 10px}
+.parents-btn:hover{border-color:var(--line2)}
 
-main{max-width:980px;margin:0 auto;padding:22px 16px 80px}
-h1{font-size:30px;margin:6px 0 14px;line-height:1.2}
-h2{font-size:23px;margin:22px 0 10px}
+/* ---------- Navigation unten (Handy) ---------- */
+#tabs{display:none}
+@media (max-width:760px){
+  .topnav{display:none}
+  #tabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:2px solid var(--line);height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding:4px 6px env(safe-area-inset-bottom)}
+  #tabs button{flex:1;background:none;border:2px solid transparent;border-radius:14px;margin:4px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-size:12px;font-weight:800;color:var(--muted);position:relative}
+  #tabs button .i{font-size:25px;line-height:1.1}
+  #tabs button.on{background:var(--blue-soft);border-color:#84d8ff;color:var(--blue-d)}
+  #tabs .badge-n{position:absolute;top:2px;right:calc(50% - 26px);margin:0}
+  main{padding-bottom:calc(var(--nav-h) + 40px)!important}
+}
+/* Konzentrations-Modus: beim Üben und Erklären keine Navigation */
+body[data-focus] .top, body[data-focus] #tabs{display:none}
+body[data-focus] main{padding-top:10px;padding-bottom:200px!important}
+
+main{max-width:1040px;margin:0 auto;padding:22px 16px 80px}
+h1{font-size:30px;margin:6px 0 14px;line-height:1.2;letter-spacing:-.3px}
+h2{font-size:23px;margin:24px 0 10px;letter-spacing:-.2px}
 h3{font-size:19px;margin:0 0 6px}
 .muted{color:var(--muted)}
 .small{font-size:15px}
+.center{text-align:center}
 
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;border:2px solid var(--line)}
 .grid{display:grid;gap:16px}
 .g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
 
-.btn{border:0;border-radius:14px;padding:12px 20px;font-weight:800;font-size:18px;background:var(--pri-soft);color:var(--pri);box-shadow:0 3px 0 rgba(0,0,0,.08);transition:transform .08s}
-.btn:active{transform:translateY(2px);box-shadow:none}
-.btn:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
-.btn.primary{background:var(--pri);color:#fff;box-shadow:0 4px 0 #5a2fd6}
-.btn.ok{background:var(--ok);color:#fff;box-shadow:0 4px 0 #0f7a37}
-.btn.ghost{background:transparent;border:2px solid var(--line);color:var(--ink);box-shadow:none}
-.btn.big{font-size:22px;padding:16px 28px;border-radius:18px}
-.btn:disabled{opacity:.45;cursor:default}
+/* ---------- Knöpfe: kräftig, mit 3D-Kante ---------- */
+.btn{--b:var(--line2);border:2px solid var(--line2);border-radius:16px;padding:11px 20px;font-weight:900;font-size:17px;background:#fff;color:var(--pri);box-shadow:0 4px 0 var(--b);transition:transform .06s,filter .15s;letter-spacing:.2px;line-height:1.25}
+.btn:hover{filter:brightness(1.04)}
+.btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--b)}
+.btn:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.btn.primary{--b:var(--pri-d);background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.ok,.btn.go{--b:var(--green-d);background:var(--green);border-color:var(--green);color:#fff}
+.btn.blue{--b:var(--blue-d);background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.danger{--b:var(--red-d);background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);--b:var(--line2)}
+.btn.big{font-size:20px;padding:14px 28px;border-radius:18px}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.5;cursor:default;filter:grayscale(.4)}
+.btn:disabled:active{transform:none;box-shadow:0 4px 0 var(--b)}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.icon-btn{background:var(--pri-soft);border:0;border-radius:12px;width:42px;height:42px;font-size:20px;flex:none}
+.icon-btn{background:var(--blue-soft);border:2px solid #b8e8ff;border-radius:14px;width:46px;height:46px;font-size:21px;flex:none;box-shadow:0 3px 0 #b8e8ff}
+.icon-btn:active{transform:translateY(3px);box-shadow:none}
+.x-btn{background:none;border:0;font-size:28px;color:#b0a9c4;width:44px;height:44px;border-radius:12px;flex:none;font-weight:900}
+.x-btn:hover{background:var(--line)}
 
-/* home */
-.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
-.mascot{font-size:72px;line-height:1;animation:bob 3s ease-in-out infinite}
-@keyframes bob{50%{transform:translateY(-6px) rotate(-3deg)}}
-.bubble{position:relative;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:12px 16px;box-shadow:var(--shadow);flex:1;min-width:220px}
-.ring{width:120px;height:120px;flex:none}
-.tile{cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:transform .12s}
+/* ---------- Euli ---------- */
+.euli{display:block;flex:none;overflow:visible}
+.euli.bob{animation:bob 3s ease-in-out infinite}
+.euli-cheer .wing-l,.euli-cheer .wing-r{animation:flap .5s ease-in-out 3}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-2deg)}}
+@keyframes flap{50%{transform:translateY(-4px)}}
+.mascot{line-height:1}
+.say{display:flex;align-items:flex-end;gap:12px}
+.bubble{position:relative;background:var(--card);border:2px solid var(--line);border-radius:20px;padding:14px 18px;box-shadow:var(--shadow);flex:1;min-width:0;font-weight:700}
+.bubble::before{content:"";position:absolute;left:-11px;bottom:22px;width:18px;height:18px;background:#fff;border-left:2px solid var(--line);border-bottom:2px solid var(--line);transform:rotate(45deg)}
+
+/* ---------- Startseite ---------- */
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.hero .say{flex:1;min-width:260px}
+.ring{width:118px;height:118px;flex:none}
+.cta{background:linear-gradient(135deg,#7c4dff,#9b6dff);color:#fff;border:0;border-radius:24px;padding:22px;box-shadow:0 6px 0 var(--pri-d);display:flex;gap:18px;align-items:center;margin:0 0 22px;flex-wrap:wrap}
+.cta h2{margin:0 0 4px;color:#fff;font-size:24px}
+.cta p{margin:0;opacity:.92;font-size:16px}
+.cta .btn{--b:#d9ccff;background:#fff;color:var(--pri);border-color:#fff}
+.tile{cursor:pointer;display:flex;flex-direction:column;gap:4px;transition:transform .12s;text-align:left;font:inherit;color:inherit}
 .tile:hover{transform:translateY(-3px)}
-.tile .ic{font-size:36px}
-.badge-n{background:var(--coral);color:#fff;border-radius:999px;padding:0 9px;font-size:14px;font-weight:900;margin-left:6px}
+.tile:active{transform:translateY(2px);box-shadow:none}
+.tile .ic{font-size:38px;line-height:1.1}
+.badge-n{background:var(--red);color:#fff;border-radius:999px;padding:0 8px;font-size:13px;font-weight:900;margin-left:6px;line-height:20px;display:inline-block;min-width:20px;text-align:center}
+.plan-step{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:2px dashed var(--line)}
+.plan-step:first-of-type{border-top:0}
+.plan-step .chk{width:30px;height:30px;border-radius:50%;border:3px solid var(--line2);flex:none;display:grid;place-items:center;font-size:16px;color:#fff;font-weight:900;margin-top:2px}
+.plan-step .chk.done{background:var(--green);border-color:var(--green)}
+.count{background:var(--pri-soft);border-radius:18px;padding:8px 14px;text-align:center;min-width:86px}
+.count .stat{font-size:40px;line-height:1}
 
-/* topics */
+/* ---------- Lernpfad (Themen) ---------- */
+.unit{border-radius:20px;padding:16px 20px;color:#fff;margin:28px 0 8px;box-shadow:0 5px 0 rgba(0,0,0,.18);display:flex;align-items:center;gap:14px}
+.unit .ul{font-size:14px;font-weight:900;opacity:.85;text-transform:uppercase;letter-spacing:.6px}
+.unit h2{margin:0;font-size:22px;color:#fff}
+.unit .uic{font-size:34px;width:54px;height:54px;border-radius:16px;background:rgba(255,255,255,.22);display:grid;place-items:center;flex:none}
+.path{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 6px}
+.node{display:flex;flex-direction:column;align-items:center;gap:6px;width:200px;text-align:center;background:none;border:0;padding:0;font:inherit;color:inherit}
+.node .disc{position:relative;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font-size:36px;background:var(--uc,var(--pri));box-shadow:0 7px 0 var(--ud,var(--pri-d));transition:transform .08s}
+.node:active .disc{transform:translateY(5px);box-shadow:0 2px 0 var(--ud,var(--pri-d))}
+.node .disc.fresh{background:#e9e5f3;box-shadow:0 7px 0 #cfc7e2}
+.node .disc.gold{background:var(--yellow);box-shadow:0 7px 0 var(--yellow-d)}
+.node .disc svg.pring{position:absolute;inset:-9px;width:102px;height:102px;pointer-events:none}
+.node .disc .flag{position:absolute;top:-6px;right:-8px;font-size:20px;background:#fff;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;box-shadow:0 2px 0 var(--line2);border:2px solid var(--line)}
+.node .nt{font-weight:800;font-size:15px;line-height:1.25}
+.node .nm{font-size:13px;color:var(--muted);font-weight:700}
+.node:hover .disc{filter:brightness(1.05)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted);font-weight:700}
+
+/* alte Themen-Kacheln (Elternbereich u. a.) */
 .group-title{display:flex;align-items:center;gap:8px}
 .topic{cursor:pointer;display:flex;gap:12px;align-items:center;padding:14px 16px;transition:transform .12s}
-.topic:hover{transform:translateY(-2px)}
 .topic .ic{font-size:32px;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:var(--pri-soft);flex:none}
 .topic .t{font-weight:800;line-height:1.25}
-.stars{color:var(--sun);letter-spacing:2px;font-size:17px}
-.stars .off{color:#e2dbe9}
-.mbar{height:8px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:5px}
-.mbar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--ok));border-radius:9px}
+.stars{color:var(--yellow);letter-spacing:2px;font-size:18px;text-shadow:0 1px 0 var(--yellow-d)}
+.stars .off{color:#ddd7ea;text-shadow:none}
+.mbar{height:12px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:5px}
+.mbar i{display:block;height:100%;background:var(--green);border-radius:9px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08)}
 .tag{display:inline-block;font-size:13px;font-weight:800;border-radius:8px;padding:1px 8px;background:var(--warn-soft);color:#a16207;margin-left:4px}
-.tag.school{background:#e0f2fe;color:#0369a1}
+.tag.school{background:var(--blue-soft);color:var(--blue-d)}
 
-/* lesson */
-.lesson-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.dots{display:flex;gap:6px;flex:1;justify-content:center}
-.dots i{width:12px;height:12px;border-radius:50%;background:var(--line)}
-.dots i.on{background:var(--pri)}
-.slide{min-height:340px;animation:pop .3s ease}
-@keyframes pop{from{opacity:0;transform:translateY(8px)}}
+/* Themen-Detail */
+.topic-hero{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.topic-hero .big-ic{width:96px;height:96px;border-radius:28px;display:grid;place-items:center;font-size:52px;background:var(--pri-soft);box-shadow:0 5px 0 var(--line2);flex:none}
+.stat-chips{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+.chip{border:2px solid var(--line);border-radius:14px;padding:6px 12px;font-weight:800;font-size:15px;background:#fff}
+
+/* ---------- Kopf im Konzentrations-Modus (Üben, Erklären) ---------- */
+.focusbar{display:flex;align-items:center;gap:12px;max-width:760px;margin:0 auto 18px}
+.progress{flex:1;height:18px;background:var(--line);border-radius:12px;overflow:hidden;margin:0}
+.progress i{display:block;height:100%;background:var(--green);border-radius:12px;transition:width .45s cubic-bezier(.3,1.4,.6,1);position:relative;min-width:18px}
+.progress i::after{content:"";position:absolute;left:10px;right:10px;top:4px;height:5px;border-radius:4px;background:rgba(255,255,255,.35)}
+.combo{font-weight:900;color:var(--orange);font-size:18px;min-width:44px;text-align:right}
+.combo.zero{color:#c9c2da}
+
+/* ---------- Erklärungen ---------- */
+.lesson-head{display:flex;align-items:center;gap:12px}
+.dots{display:flex;gap:6px;flex:1}
+.dots i{flex:1;height:14px;border-radius:8px;background:var(--line)}
+.dots i.on{background:var(--blue)}
+.slide{min-height:300px;animation:pop .3s ease;max-width:760px;margin:0 auto}
+.slide-meta{font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+@keyframes pop{from{opacity:0;transform:translateY(10px)}}
 .slide p{margin:8px 0}
-.merke{background:var(--warn-soft);border-left:6px solid var(--warn);border-radius:12px;padding:12px 16px;margin:12px 0}
-.merke::before{content:"📌 Merke dir:";display:block;font-weight:900;color:#a16207;margin-bottom:4px}
-.story{background:#e0f2fe;border-left:6px solid #0ea5e9;border-radius:12px;padding:12px 16px;margin:12px 0}
-.oops{background:var(--bad-soft);border-left:6px solid var(--bad);border-radius:12px;padding:12px 16px;margin:12px 0}
-.oops::before{content:"⚠️ Typischer Fehler:";display:block;font-weight:900;color:var(--bad);margin-bottom:4px}
-.widget{background:#faf7ff;border:2px dashed var(--pri2);border-radius:16px;padding:16px;margin:14px 0;text-align:center}
+.merke{background:var(--warn-soft);border:2px solid #ffe08a;border-radius:16px;padding:14px 18px;margin:14px 0}
+.merke::before{content:"📌 Merke dir";display:block;font-weight:900;color:#b45309;margin-bottom:4px;font-size:15px;text-transform:uppercase;letter-spacing:.5px}
+.story{background:var(--blue-soft);border:2px solid #b8e8ff;border-radius:16px;padding:14px 18px;margin:14px 0}
+.oops{background:var(--bad-soft);border:2px solid #ffc1c1;border-radius:16px;padding:14px 18px;margin:14px 0}
+.oops::before{content:"⚠️ Typischer Fehler";display:block;font-weight:900;color:var(--red-d);margin-bottom:4px;font-size:15px;text-transform:uppercase;letter-spacing:.5px}
+.widget{background:#fbf9ff;border:2px solid var(--line2);border-radius:20px;padding:16px;margin:16px 0;text-align:center;box-shadow:0 4px 0 var(--line)}
 .widget .ctrl{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:10px 0}
 .widget label{font-weight:800;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:16px}
-.widget input[type=range]{width:180px;accent-color:var(--pri)}
+.widget input[type=range]{width:190px;accent-color:var(--pri);height:28px}
 .widget .out{font-size:22px;font-weight:800;margin-top:6px}
-.widget-hint{font-size:14px;color:var(--pri);font-weight:800;margin-bottom:6px}
-table.tbl{border-collapse:collapse;margin:10px auto}
-@media (max-width:600px){table.tbl{display:block;max-width:100%;overflow-x:auto;width:max-content}table.tbl td,table.tbl th{padding:5px 8px}}
-table.tbl td,table.tbl th{border:2px solid var(--line);padding:6px 12px;text-align:center}
+.widget-hint{font-size:14px;color:var(--pri);font-weight:900;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+table.tbl{border-collapse:separate;border-spacing:0;margin:10px auto;border:2px solid var(--line2);border-radius:14px;overflow:hidden}
+table.tbl td,table.tbl th{border-right:2px solid var(--line);border-bottom:2px solid var(--line);padding:7px 12px;text-align:center}
+table.tbl tr:last-child td{border-bottom:0} table.tbl td:last-child,table.tbl th:last-child{border-right:0}
 table.tbl th{background:var(--pri-soft)}
-textarea{width:100%;min-height:100px;border:2px solid var(--line);border-radius:14px;padding:12px;font:inherit}
+@media (max-width:600px){table.tbl{display:block;max-width:100%;overflow-x:auto;width:max-content}table.tbl td,table.tbl th{padding:5px 8px}}
+textarea{width:100%;min-height:110px;border:2px solid var(--line2);border-radius:16px;padding:12px 14px;font:inherit;background:#fff}
+textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 
-/* fractions */
+/* Brüche */
 .fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 3px;line-height:1.1;font-weight:800}
 .fr>span:first-child{border-bottom:2.5px solid currentColor;padding:0 4px}
 .fr>span:last-child{padding:0 4px}
 
-/* task */
+/* ---------- Aufgabe ---------- */
 .task-wrap{max-width:760px;margin:0 auto}
-.progress{height:14px;background:var(--line);border-radius:9px;overflow:hidden;margin:6px 0 16px}
-.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--pri));border-radius:9px;transition:width .4s}
 .task .q-row{display:flex;gap:12px;align-items:flex-start}
-.task .q{font-size:23px;font-weight:700;flex:1;line-height:1.6}
-.task .meta{font-size:14px;color:var(--muted);font-weight:800;margin-bottom:6px}
-.visual{display:flex;justify-content:center;margin:14px 0;overflow-x:auto}
-.visual svg,.card svg:not(.ring){max-width:100%;height:auto}
-.answer-area{display:flex;justify-content:center;align-items:center;gap:10px;margin:18px 0;flex-wrap:wrap;font-size:24px;font-weight:800}
-.ans{width:170px;font-size:26px;font-weight:800;text-align:center;border:3px solid var(--pri2);border-radius:14px;padding:8px;background:#fff;color:var(--ink)}
-.ans:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 4px var(--pri-soft)}
-.frac-in{display:inline-flex;flex-direction:column;align-items:center;gap:6px}
-.frac-in .ans{width:96px}
-.frac-in .line{width:110px;height:4px;background:var(--ink);border-radius:3px}
-.choices{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.choice{min-width:96px;font-size:22px;font-weight:800;padding:12px 20px;border-radius:14px;border:3px solid var(--line);background:#fff;color:var(--ink)}
-.choice:hover{border-color:var(--pri2)}
-.choice.picked-bad{border-color:var(--bad);background:var(--bad-soft)}
-.choice.picked-ok{border-color:var(--ok);background:var(--ok-soft)}
+.task .q{font-size:25px;font-weight:800;flex:1;line-height:1.5}
+.task .meta{font-size:13px;color:var(--muted);font-weight:900;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.visual{display:flex;justify-content:center;margin:16px 0;overflow-x:auto}
+.visual svg,.card svg:not(.ring):not(.euli):not(.pring){max-width:100%;height:auto}
+.answer-area{display:flex;justify-content:center;align-items:center;gap:10px;margin:22px 0;flex-wrap:wrap;font-size:24px;font-weight:800}
+.ans{width:180px;font-size:28px;font-weight:900;text-align:center;border:2px solid var(--line2);border-radius:16px;padding:10px;background:#fff;color:var(--ink);box-shadow:0 4px 0 var(--line)}
+.ans:focus{outline:none;border-color:var(--blue);box-shadow:0 4px 0 #84d8ff}
+.ans:disabled{background:#faf9fd;color:var(--ink)}
+.frac-in{display:inline-flex;flex-direction:column;align-items:center;gap:8px}
+.frac-in .ans{width:100px}
+.frac-in .line{width:116px;height:4px;background:var(--ink);border-radius:3px}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;width:100%;max-width:640px}
+.choice{font-size:22px;font-weight:800;padding:14px 16px;border-radius:16px;border:2px solid var(--line2);background:#fff;color:var(--ink);box-shadow:0 4px 0 var(--line2);transition:transform .06s;min-height:62px}
+.choice:hover:not(:disabled){background:#faf8ff}
+.choice:active:not(:disabled){transform:translateY(4px);box-shadow:none}
+.choice.picked-bad{border-color:var(--red);background:var(--bad-soft);color:var(--red-d);box-shadow:0 4px 0 #ffb3b3}
+.choice.picked-ok{border-color:var(--green);background:var(--ok-soft);color:var(--green-d);box-shadow:0 4px 0 #b6ec8e}
+.choice:disabled{cursor:default}
 .task-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.hint-box{background:var(--warn-soft);border-radius:14px;padding:10px 16px;margin:10px 0}
-.hint-box div{margin:4px 0}
-.hint-box div::before{content:"💡 "}
-.fb{border-radius:16px;padding:14px 18px;margin:14px 0;animation:pop .25s}
-.fb.ok{background:var(--ok-soft);border:2px solid #9be3b4}
-.fb.try{background:var(--warn-soft);border:2px solid #fcd98a}
-.fb.bad{background:#f3eeff;border:2px solid var(--pri2)}
-.fb .head{font-weight:900;font-size:20px}
-ol.steps{margin:10px 0;padding-left:26px}
+.hint-box{display:flex;gap:10px;align-items:flex-end;margin:12px 0}
+.hint-box .hb{background:var(--warn-soft);border:2px solid #ffe08a;border-radius:18px;padding:10px 16px;flex:1;position:relative}
+.hint-box .hb div{margin:3px 0}
+.hint-box .hb div::before{content:"💡 "}
+.fb{border-radius:18px;padding:14px 18px;margin:14px 0;animation:pop .25s}
+.fb.ok{background:var(--ok-soft);color:#2f6d00}
+.fb.try{background:var(--warn-soft);color:#8a4b00}
+.fb.bad{background:var(--bad-soft);color:#9b1c1c}
+.fb .head{font-weight:900;font-size:21px;display:flex;align-items:center;gap:10px}
+.fb details{margin-top:6px} .fb summary{cursor:pointer;font-weight:800}
+ol.steps{margin:10px 0;padding-left:26px;color:var(--ink)}
 ol.steps li{margin:6px 0;animation:pop .35s both}
 .shake{animation:shake .4s}
 @keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
-.xp-pop{display:inline-block;background:var(--sun);color:#5a3b00;border-radius:999px;padding:0 10px;font-weight:900;margin-left:8px;animation:pop .3s}
+.xp-pop{display:inline-block;background:var(--yellow);color:#5a3b00;border-radius:999px;padding:0 10px;font-weight:900;font-size:16px;animation:pop .3s}
 
-/* summary & badges */
+/* Prüfen-Leiste unten (wie in Lern-Apps): beim Üben fest am unteren Rand, färbt sich grün/rot */
+.checkbar{margin-top:10px}
+.practice-task .checkbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:2px solid var(--line);padding:14px 16px calc(14px + env(safe-area-inset-bottom));transition:background .2s}
+.practice-task .checkbar .inner{max-width:760px;margin:0 auto}
+.practice-task .checkbar .fb{margin:0 0 12px;padding:0;background:none;max-height:42vh;overflow:auto}
+.practice-task .checkbar.s-ok{background:#d7ffb8;border-top-color:#b6ec8e}
+.practice-task .checkbar.s-try{background:#fff1c9;border-top-color:#ffe08a}
+.practice-task .checkbar.s-bad{background:#ffdfe0;border-top-color:#ffc1c1}
+.practice-task .checkbar .task-actions{flex-wrap:nowrap}
+.practice-task .checkbar .task-actions .btn{flex:1;max-width:340px}
+.practice-task .checkbar .task-actions .btn[data-hint]{flex:0 1 auto}
+.checkbar.s-bad .btn[data-next]{--b:var(--red-d);background:var(--red);border-color:var(--red)}
+.checkbar.s-ok .btn[data-next]{--b:var(--green-d);background:var(--green);border-color:var(--green)}
+.inline-task .checkbar{border-top:2px solid var(--line);padding-top:14px}
+
+/* ---------- Abschluss & Erfolge ---------- */
 .big-emoji{font-size:80px;text-align:center}
-.center{text-align:center}
+.result-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+.rt{border:2px solid var(--c);border-radius:18px;overflow:hidden;background:#fff}
+.rt .rl{background:var(--c);color:#fff;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;padding:4px}
+.rt .rv{font-size:26px;font-weight:900;color:var(--c);padding:10px 4px}
 .badge{text-align:center;padding:16px 10px}
-.badge .ic{font-size:44px}
-.badge.locked{filter:grayscale(1);opacity:.45}
-#toasts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:100;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
-.toast{background:var(--ink);color:#fff;padding:12px 22px;border-radius:16px;font-weight:800;animation:pop .3s;box-shadow:var(--shadow);text-align:center}
+.badge .ic{font-size:40px;width:76px;height:76px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ffe27a,#ffc800);box-shadow:0 5px 0 var(--yellow-d)}
+.badge.locked .ic{background:#ece9f3;box-shadow:0 5px 0 #d6d0e4;filter:grayscale(1);opacity:.6}
+.badge.locked b{color:var(--muted)}
+#toasts{position:fixed;left:50%;top:14px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:100;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
+.toast{background:var(--ink);color:#fff;padding:12px 20px;border-radius:16px;font-weight:800;animation:drop .3s;box-shadow:0 6px 18px rgba(43,35,64,.25);text-align:center;font-size:16px}
+@keyframes drop{from{opacity:0;transform:translateY(-12px)}}
 canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:90}
 
-/* onboarding */
-.avatars{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
-.avatars button{font-size:36px;width:64px;height:64px;border-radius:16px;border:3px solid var(--line);background:#fff}
-.avatars button.on{border-color:var(--pri);background:var(--pri-soft)}
-.name-in{font-size:24px;border:3px solid var(--pri2);border-radius:14px;padding:10px 16px;width:min(320px,100%);text-align:center}
+/* ---------- Start (Name) ---------- */
+.avatars{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:10px;margin:12px auto;max-width:460px}
+.avatars button{font-size:34px;height:66px;border-radius:18px;border:2px solid var(--line2);background:#fff;box-shadow:0 4px 0 var(--line2)}
+.avatars button:active{transform:translateY(4px);box-shadow:none}
+.avatars button.on{border-color:var(--blue);background:var(--blue-soft);box-shadow:0 4px 0 #84d8ff}
+.name-in{font-size:24px;font-weight:800;border:2px solid var(--line2);border-radius:16px;padding:12px 16px;width:min(340px,100%);text-align:center;box-shadow:0 4px 0 var(--line)}
+.name-in:focus{outline:none;border-color:var(--blue);box-shadow:0 4px 0 #84d8ff}
 
-/* parents */
+/* ---------- Elternbereich ---------- */
 .cal{display:flex;gap:5px;flex-wrap:wrap}
-.cal i{width:26px;height:26px;border-radius:6px;background:var(--line);display:grid;place-items:center;font-size:11px;font-style:normal;color:#fff;font-weight:800}
+.cal i{width:28px;height:28px;border-radius:8px;background:var(--line);display:grid;place-items:center;font-size:11px;font-style:normal;color:#fff;font-weight:800}
 .stat{font-size:30px;font-weight:900;color:var(--pri)}
 table.ptbl{width:100%;border-collapse:collapse;font-size:15px}
 table.ptbl td,table.ptbl th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
 .focus-list{columns:2;column-gap:20px;font-size:16px}
 .focus-list label{display:block;break-inside:avoid;margin:3px 0}
+input[type=checkbox]{accent-color:var(--pri);width:18px;height:18px;vertical-align:-3px}
+select.ans,input.ans[type=date]{box-shadow:none}
+
 @media (max-width:600px){
   body{font-size:17px}
-  .task .q{font-size:20px}
+  h1{font-size:26px}
+  .task .q{font-size:22px}
   .xpbar,.hide-sm{display:none}
   .focus-list{columns:1}
+  .card{padding:16px}
+  .choices{grid-template-columns:1fr 1fr}
+  .result-tiles .rv{font-size:22px}
 }
-
-.parents-btn{cursor:pointer;font:inherit;font-weight:800;border:2px solid var(--line);background:#fff}
 @media (max-width:430px){.hide-xs{display:none}}
-@media (max-width:380px){.top-in{gap:6px}.top-in .pill{padding:3px 8px;font-size:14px}}
+@media (max-width:380px){.top-in{gap:4px}.pill{padding:3px 5px;font-size:15px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Erklärung: Zurück/Weiter fest unten */
+.lessonbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:2px solid var(--line);padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
+.lessonbar .inner{max-width:760px;margin:0 auto;display:flex;gap:12px}
+.lessonbar #next{flex:1}
+.lessonbar #prev{flex:none;min-width:72px}
+/* Kacheln als Knöpfe */
+button.card{font:inherit;color:inherit;width:100%}
+.brand,.parents-btn,.pill{white-space:nowrap}
+@media (max-width:1060px){.brand span{display:none}}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7c4dff">
@@ -193,6 +326,7 @@ table.ptbl td,table.ptbl th{padding:7px 6px;border-bottom:1px solid var(--line);
 <body>
 <header class="top" id="top"></header>
 <main id="app"></main>
+<nav id="tabs" aria-label="Navigation"></nav>
 <canvas id="confetti"></canvas>
 <noscript>Bitte JavaScript aktivieren.</noscript>
 <script>
@@ -445,12 +579,13 @@ function svgCoord({ min = -6, max = 6, pts = [], sel = null, good = null, size =
 
 /* Zahlenstrahl / Zahlengerade; sub = Unterteilungen pro Einheit */
 function svgNumLine({ min = -10, max = 10, sub = 1, sel = null, good = null, mark = null, jump = null, frac = false } = {}) {
-  const W = 600, pad = 24, H = jump ? 120 : 80, ly = H - 40, u = (W - 2 * pad) / (max - min), X = v => pad + (v - min) * u;
+  const W = 600, pad = 24, H = jump ? 130 : 90, ly = H - 48, u = (W - 2 * pad) / (max - min), X = v => pad + (v - min) * u;
   let g = `<line x1="${pad - 10}" y1="${ly}" x2="${W - pad + 14}" y2="${ly}" stroke="#2b2340" stroke-width="2.5"/><polygon points="${W - pad + 18},${ly} ${W - pad + 8},${ly - 5} ${W - pad + 8},${ly + 5}"/>`;
+  const every = Math.max(1, Math.ceil((max - min) / 12)), fs = (max - min) > 24 ? 22 : 26;  // am Handy lesbar: höchstens ~13 Beschriftungen, große Schrift
   for (let k = 0; k <= (max - min) * sub; k++) {
-    const v = min + k / sub, major = k % sub === 0, x = X(v);
-    g += `<line x1="${x}" y1="${ly - (major ? 11 : 6)}" x2="${x}" y2="${ly + (major ? 11 : 6)}" stroke="#2b2340" stroke-width="${major ? 2 : 1}"/>`;
-    if (major) g += `<text x="${x}" y="${ly + 28}" text-anchor="middle" font-size="14" font-weight="700">${sg(Math.round(v))}</text>`;
+    const v = min + k / sub, major = k % sub === 0, x = X(v), lab = major && (Math.round(v) % every === 0 || v === 0);
+    g += `<line x1="${x}" y1="${ly - (lab ? 13 : major ? 9 : 5)}" x2="${x}" y2="${ly + (lab ? 13 : major ? 9 : 5)}" stroke="#2b2340" stroke-width="${lab ? 3 : major ? 2 : 1}"/>`;
+    if (lab) g += `<text x="${x}" y="${ly + 36}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${v === 0 ? '#7c4dff' : '#2b2340'}">${sg(Math.round(v))}</text>`;
   }
   if (jump) {
     const [a, b] = jump, xa = X(a), xb = X(b), up = ly - 14, top = ly - 14 - Math.min(60, Math.abs(xb - xa) / 2 + 12);
@@ -458,8 +593,8 @@ function svgNumLine({ min = -10, max = 10, sub = 1, sel = null, good = null, mar
       <text x="${(xa + xb) / 2}" y="${top + 8}" text-anchor="middle" font-weight="900" font-size="16" fill="#e5484d">${b - a > 0 ? '+' : '−'}${Math.abs(b - a)}</text><circle cx="${xa}" cy="${ly}" r="6" fill="#7c4dff"/>`;
   }
   if (mark !== null) g += `<circle cx="${X(mark)}" cy="${ly}" r="8" fill="#7c4dff"/><text x="${X(mark)}" y="${ly - 16}" text-anchor="middle" font-weight="900" font-size="16" fill="#7c4dff">?</text>`;
-  if (good !== null) g += `<circle cx="${X(good)}" cy="${ly}" r="11" fill="none" stroke="#16a34a" stroke-width="4"/>`;
-  if (sel !== null) g += `<circle cx="${X(sel)}" cy="${ly}" r="8" fill="#ff7a6b" stroke="#fff" stroke-width="2"/>`;
+  if (good !== null) g += `<circle cx="${X(good)}" cy="${ly}" r="13" fill="none" stroke="#58cc02" stroke-width="5"/>`;
+  if (sel !== null) g += `<circle cx="${X(sel)}" cy="${ly}" r="11" fill="#ff4b4b" stroke="#fff" stroke-width="3"/>`;
   return `<svg width="100%" viewBox="0 0 ${W} ${H}" data-kind="line" data-min="${min}" data-max="${max}" data-sub="${sub}" data-pad="${pad}" data-w="${W}" style="cursor:pointer;max-width:620px">${g}</svg>`;
 }
 
@@ -510,6 +645,32 @@ function svgFig(name) {
   const p = FIGS[name], xs = p.map(q => q[0]), ys = p.map(q => q[1]), sc = Math.min(200 / (Math.max(...xs) - Math.min(...xs)), 140 / (Math.max(...ys) - Math.min(...ys)));
   const pts = p.map(([x, y]) => [20 + (x - Math.min(...xs)) * sc, 160 - (y - Math.min(...ys)) * sc]);
   return `<svg width="250" height="180" viewBox="0 0 250 180"><polygon points="${pts.map(q => q.join(',')).join(' ')}" fill="#efe8ff" stroke="#2b2340" stroke-width="3" stroke-linejoin="round"/></svg>`;
+}
+
+/* Euli, die Eule – als Zeichnung (sieht auf jedem Gerät gleich aus). Stimmungen: happy, cheer, think, comfort, wave */
+function euli(mood = 'happy', size = 96, cls = '') {
+  // Flügel hängen an der Schulter und werden je nach Stimmung gehoben
+  const wl = { cheer: 135 }[mood] ?? 12, wr = { cheer: -135, wave: -150 }[mood] ?? -12;
+  const wingL = `rotate(${wl} 58 100)`, wingR = `rotate(${wr} 142 100)`;
+  const look = mood === 'think' ? [6, -6] : mood === 'comfort' ? [0, 4] : [3, 1];
+  const eye = cx => mood === 'cheer'
+    ? `<path d="M${cx - 15},84 Q${cx},66 ${cx + 15},84" stroke="#2b2340" stroke-width="7" fill="none" stroke-linecap="round"/>`
+    : `<circle cx="${cx}" cy="80" r="23" fill="#fff"/><circle cx="${cx + look[0]}" cy="${82 + look[1]}" r="12" fill="#2b2340"/><circle cx="${cx + look[0] + 4}" cy="${77 + look[1]}" r="4" fill="#fff"/>`
+      + (mood === 'comfort' ? (cx < 100 ? `<path d="M${cx - 18},58 L${cx + 12},50" stroke="#5b3a1c" stroke-width="6" stroke-linecap="round"/>` : `<path d="M${cx + 18},58 L${cx - 12},50" stroke="#5b3a1c" stroke-width="6" stroke-linecap="round"/>`) : '');
+  const beak = mood === 'cheer' ? '<path d="M88,100 Q100,124 112,100 Z" fill="#ff9600"/><path d="M93,104 Q100,116 107,104 Z" fill="#c2410c"/>' : '<path d="M89,98 L111,98 L100,114 Z" fill="#ff9600"/>';
+  return `<svg class="euli ${cls} euli-${mood}" width="${size}" height="${size}" viewBox="0 0 200 200" role="img" aria-label="Euli die Eule">
+    <path d="M58,52 L66,18 L90,46 Z" fill="#5b2fd6"/><path d="M142,52 L134,18 L110,46 Z" fill="#5b2fd6"/>
+    <g class="wing-l"><ellipse cx="46" cy="134" rx="17" ry="38" fill="#6b4220" transform="${wingL}"/></g>
+    <g class="wing-r"><ellipse cx="154" cy="134" rx="17" ry="38" fill="#6b4220" transform="${wingR}"/></g>
+    <ellipse cx="100" cy="116" rx="62" ry="72" fill="#8d5a2b"/>
+    <ellipse cx="100" cy="140" rx="40" ry="44" fill="#f1d3a8"/>
+    <path d="M82,132 q6,7 12,0 M106,132 q6,7 12,0 M94,150 q6,7 12,0" stroke="#c99a62" stroke-width="4" fill="none" stroke-linecap="round"/>
+    ${eye(76)}${eye(124)}
+    <circle cx="60" cy="104" r="8" fill="#ff8fa3" opacity=".55"/><circle cx="140" cy="104" r="8" fill="#ff8fa3" opacity=".55"/>
+    ${beak}
+    <path d="M78,186 q6,-10 12,0 q6,-10 12,0 M98,186 q6,-10 12,0 q6,-10 12,0" stroke="#ff9600" stroke-width="6" fill="none" stroke-linecap="round"/>
+    ${mood === 'think' ? '<text x="160" y="40" font-size="40" font-weight="900" fill="#7c4dff">?</text>' : ''}${mood === 'cheer' ? '<text x="150" y="36" font-size="30">✨</text><text x="18" y="40" font-size="26">✨</text>' : ''}
+  </svg>`;
 }
 </script>
 <script>
@@ -2362,7 +2523,7 @@ BOOK.boost = { teilbar: 1.8, ggtkgv: 1.5, ganzrech: 1.3, koordinaten: 1.3 };
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '31.10.2026 08:39';
+const APP_VER = '01.11.2026 08:10';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2642,21 +2803,29 @@ function checkBadges() {
 
 /* ---------- Grundgerüst ---------- */
 const app = () => $('#app');
+const UNIT_COLORS = [['#7c4dff', '#5b2fd6'], ['#1cb0f6', '#1899d6'], ['#ff9600', '#d97e00'], ['#58cc02', '#46a302'], ['#ff6fae', '#e0458b'], ['#14b8a6', '#0f8f81'], ['#ffc800', '#e5a800'], ['#ff4b4b', '#ea2b2b'], ['#6366f1', '#4f46e5'], ['#0ea5e9', '#0284c7'], ['#94a3b8', '#64748b']];
+const NAV = [['home', '🏠', 'Lernen'], ['topics', '🗺️', 'Themen'], ['mistakes', '🧰', 'Fehler'], ['badges', '🏆', 'Erfolge']];
+const navGo = id => id === 'mistakes' ? startMistakes() : go(id);
 function header() {
-  const L = lvl(), d = dayRec();
+  const L = lvl(), d = dayRec(), st = streak(), act = VIEW === 'topic' ? 'topics' : VIEW;
+  const navBtns = S.profile ? NAV.map(([id, ic, lab]) => `<button class="${act === id ? 'on' : ''}" onclick="navGo('${id}')"><span class="i">${ic}</span>${lab}${id === 'mistakes' && S.mistakes.length ? `<span class="badge-n">${S.mistakes.length}</span>` : ''}</button>`).join('') : '';
   $('#top').innerHTML = `<div class="top-in">
-    <button class="brand" onclick="go('home')"><span class="owl">🦉</span><span class="hide-sm">Mathe mit Euli</span></button><div class="sp"></div>
-    <div class="pill hide-xs" title="Tage hintereinander geübt">🔥 ${streak()}</div>
-    <div class="pill" title="Heute gelöst / Tagesziel">🎯 ${d.n}/${S.settings.goal}</div>
-    <div class="pill" title="Level ${L.l}: noch ${L.need} XP bis zum nächsten Level">⭐ Lv ${L.l}<span class="xpbar"><i style="width:${L.pct}%"></i></span></div>
-    <button class="pill parents-btn" onclick="go('parentsGate')" title="Elternbereich">👨‍👩‍👧<span class="hide-sm"> Eltern</span></button>
+    <button class="brand" onclick="go('home')" aria-label="Startseite">${euli('happy', 40)}<span class="hide-sm">Mathe mit Euli</span></button>
+    <nav class="topnav">${navBtns}</nav><div class="sp"></div>
+    ${S.profile ? `<div class="pill streak ${st ? '' : 'off'}" title="Tage hintereinander geübt">🔥 ${st}</div>
+    <div class="pill goal" title="Heute gelöst / Tagesziel">🎯 ${d.n}/${S.settings.goal}</div>
+    <div class="pill lvl hide-xs" title="Level ${L.l}: noch ${L.need} XP bis zum nächsten Level">⭐ ${L.l}<span class="xpbar"><i style="width:${L.pct}%"></i></span></div>` : ''}
+    <button class="parents-btn" onclick="go('parentsGate')" title="Elternbereich">👨‍👩‍👧<span class="hide-sm"> Eltern</span></button>
     ${S.profile ? `<button class="avatar-btn" onclick="go('badges')" title="Meine Erfolge">${S.profile.avatar}</button>` : ''}</div>`;
+  const tabs = $('#tabs'); if (tabs) tabs.innerHTML = navBtns;
 }
+function quitPractice(i) { if (!i || confirm('Wirklich aufhören? Was du schon geschafft hast, ist gespeichert.')) go('home'); }
 let VIEW = 'home';
 function go(view, ...args) {
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   if (!S.profile && view !== 'parentsGate' && view !== 'parents') view = 'onboarding';
   VIEW = view; window.scrollTo(0, 0);
+  if (['practice', 'lesson', 'summary'].includes(view)) document.body.dataset.focus = ''; else delete document.body.dataset.focus;
   header(); VIEWS[view](...args); storageBanner();
 }
 
@@ -2727,16 +2896,17 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
     ${t.visual ? `<div class="visual">${t.visual}</div>` : ''}
     <div class="answer-area">${answerHTML(t)}</div>
     ${t.note ? `<div class="center small muted">${t.note}</div>` : ''}
-    <div class="hint-box hidden"></div><div class="fb hidden"></div>
-    <div class="task-actions" data-acts><button class="btn ghost${test ? ' hidden' : ''}" data-hint>💡 Tipp</button>${t.type !== 'choice' ? '<button class="btn primary" data-check>Prüfen ✓</button>' : ''}</div></div>`;
-  const fb = $('.fb', box), hb = $('.hint-box', box), hBtn = $('[data-hint]', box);
+    <div class="hint-box hidden">${euli('think', 58)}<div class="hb"></div></div></div>
+    <div class="checkbar"><div class="inner"><div class="fb hidden"></div>
+    <div class="task-actions" data-acts><button class="btn ghost${test ? ' hidden' : ''}" data-hint>💡 Tipp</button>${t.type !== 'choice' ? '<button class="btn go big" data-check>Prüfen</button>' : ''}</div></div></div>`;
+  const fb = $('.fb', box), hb = $('.hint-box', box), hBtn = $('[data-hint]', box), bar = $('.checkbar', box), state = k => bar.className = 'checkbar' + (k ? ' s-' + k : '');
   const inputs = $$('input', box);
   let sel = null; const pickBox = $('[data-pick]', box);
   const drawPick = (extra = {}) => { if (pickBox) pickBox.innerHTML = t.type === 'grid' ? svgCoord(Object.assign({}, t.grid, { sel }, extra)) : svgNumLine(Object.assign({}, t.line, { sel }, extra)); };
   if (pickBox) { drawPick(); pickBox.addEventListener('click', e => { if (done) return; const svg = $('svg', pickBox); if (!svg) return; sel = svgPick(e, svg); drawPick(); }); }
   box.__pick = v => { sel = v; drawPick(); };
   const updHint = () => { const left = t.hints.length - hints; hBtn.textContent = left > 0 ? `💡 Tipp (${left})` : '💡 Keine Tipps mehr'; hBtn.disabled = left <= 0; };
-  const showHint = () => { if (hints >= t.hints.length) return; hb.classList.remove('hidden'); hb.insertAdjacentHTML('beforeend', `<div>${t.hints[hints++]}</div>`); updHint(); };
+  const showHint = () => { if (hints >= t.hints.length) return; hb.classList.remove('hidden'); $('.hb', hb).insertAdjacentHTML('beforeend', `<div>${t.hints[hints++]}</div>`); updHint(); };
   updHint();
   hBtn.onclick = showHint;
   $('[data-say]', box)?.addEventListener('click', () => say(t.q + (t.type === 'choice' ? '. Antworten: ' + t.choices.join(', ') : '')));
@@ -2745,7 +2915,7 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
     const xp = ok ? (tries === 0 ? (hints ? 6 : 10) : 4) : 1;
     inputs.forEach(i => i.disabled = true); $$('.choice', box).forEach(b => b.disabled = true);
     if (pickBox) drawPick({ good: t.answer });
-    $('[data-acts]', box).innerHTML = `<button class="btn primary big" data-next>${nextLabel}</button>`;
+    $('[data-acts]', box).innerHTML = `<button class="btn go big wide" data-next>${nextLabel}</button>`;
     $('[data-next]', box).onclick = () => onNext && onNext();
     setTimeout(() => $('[data-next]', box)?.focus(), 60);
     onResult && onResult({ ok, tries, hints, sec, xp });
@@ -2755,24 +2925,24 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
     if (done) return;
     const r = evaluate(t, box, picked);
     if (r.empty) { $('.answer-area', box).classList.remove('shake'); void box.offsetWidth; $('.answer-area', box).classList.add('shake'); if (r.msg) toast(r.msg); else toast('Gib zuerst eine Antwort ein ✏️'); return; }
-    if (r.partial) { fb.className = 'fb try'; fb.innerHTML = `<div class="head">${r.partial}</div>`; sndTry(); return; }
+    if (r.partial) { fb.className = 'fb try'; state('try'); fb.innerHTML = `<div class="head">${r.partial}</div>`; sndTry(); return; }
     if (r.ok) {
       if (t.type === 'choice') $(`.choice[data-c="${CSS.escape(picked)}"]`, box)?.classList.add('picked-ok');
       const xp = finish(true); sndOk(); if (tries === 0 && !hints) confetti(40);
-      fb.className = 'fb ok'; fb.innerHTML = `<div class="head">${pick(PRAISE)} <span class="xp-pop">+${xp} XP</span></div>
+      fb.className = 'fb ok'; state('ok'); fb.innerHTML = `<div class="head">✅ ${pick(PRAISE)} <span class="xp-pop">+${xp} XP</span></div>
         <details><summary class="small">So geht der Rechenweg</summary><ol class="steps">${t.steps.map(s => `<li>${s}</li>`).join('')}</ol></details>`;
       return;
     }
     tries++; sndTry();
     if (t.type === 'choice') { const b = $(`.choice[data-c="${CSS.escape(picked)}"]`, box); b?.classList.add('picked-bad'); if (b) b.disabled = true; }
     if (tries < maxTries) {
-      fb.className = 'fb try'; fb.innerHTML = `<div class="head">${r.trap ? '🤔 ' + r.trap.msg : pick(TRY_AGAIN)}</div>`;
+      fb.className = 'fb try'; state('try'); fb.innerHTML = `<div class="head">${r.trap ? '🤔 ' + r.trap.msg : pick(TRY_AGAIN)}</div>`;
       if (hints === 0) showHint();
       const i = inputs[0]; if (i) { i.select(); i.focus(); }
       return;
     }
     finish(false);
-    fb.className = 'fb bad'; fb.innerHTML = `<div class="head">${test ? 'Leider nicht richtig. So wäre es gegangen:' : 'Kein Problem – schauen wir es gemeinsam an! 🦉'}</div>
+    fb.className = 'fb bad'; state('bad'); fb.innerHTML = `<div class="head">${test ? '❌ Leider nicht richtig. So wäre es gegangen:' : '🦉 Kein Problem – schauen wir es gemeinsam an!'}</div>
       ${r.trap ? `<p>🤔 ${r.trap.msg}</p>` : ''}<ol class="steps">${t.steps.map((s, i) => `<li style="animation-delay:${i * 0.35}s">${s}</li>`).join('')}</ol>
       <div>✅ Richtige Antwort: <b>${answerText(t)}</b></div><div class="small muted" style="margin-top:6px">Diese Aufgabe kommt in deine Fehler-Kiste – du bekommst bald eine Chance, sie zu knacken. 💪</div>`;
   };
@@ -2826,17 +2996,17 @@ function examCard() {
   const e = examInfo(); if (!e) return '';
   const day = examTopicToday(), t = day && TOPIC[day.topic], d = dayRec();
   if (e.days === 0) return `<div class="card" style="margin-bottom:18px;border-color:#86efac;background:var(--ok-soft)"><h2 style="margin:0">🍀 Heute ist ${e.name}!</h2><p>Du hast so viel geübt – du schaffst das! 💪</p><div class="merke">Tief durchatmen · Jede Aufgabe genau lesen · Mit dem Leichtesten anfangen · Am Ende die Probe machen · Einheiten nicht vergessen!</div></div>`;
-  const step = (done, html) => `<div class="row" style="gap:10px;margin:8px 0"><span style="font-size:22px">${done ? '✅' : '⬜'}</span><div style="flex:1">${html}</div></div>`;
+  const step = (done, html) => `<div class="plan-step"><div class="chk ${done ? 'done' : ''}">${done ? '✓' : ''}</div><div style="flex:1">${html}</div></div>`;
   let plan = '';
   if (e.days === 1) plan = step(false, `<b>Morgen ist es so weit!</b> Heute nur kurz: <button class="btn" onclick="startMistakes()">🧰 Fehler-Kiste</button> <button class="btn" onclick="startExamTest()">📝 Probe-Schularbeit</button><div class="small muted">Dann Tasche packen (Geodreieck, Zirkel, Bleistift!) und früh schlafen 😴</div>`);
   else {
-    plan += step(d.goal, `<b>Tagestraining</b> (${S.settings.goal} gemischte Aufgaben) <button class="btn" onclick="startDaily()">▶ Start</button>`);
+    plan += step(d.goal, `<b>Tagestraining</b> (${S.settings.goal} gemischte Aufgaben) <button class="btn go" onclick="startDaily()">▶ Start</button>`);
     if (t) plan += step(day.done, `<b>Schwerpunkt heute: ${t.icon} ${t.title}</b> <span class="small muted">📘 ${t.book}</span><br><button class="btn" onclick="go('lesson','${t.id}')">📖 Erklärung</button> <button class="btn" onclick="startTopic('${t.id}')">✏️ 8 Aufgaben</button>`);
     if (e.days <= 6) plan += step(false, `<b>Probe-Schularbeit</b> – 12 Aufgaben aus dem ganzen Stoff, ohne Tipps <button class="btn" onclick="startExamTest()">📝 Start</button>`);
   }
-  return `<div class="card" style="margin-bottom:18px;border-color:#fcd98a"><div class="row" style="align-items:center"><div style="text-align:center;min-width:90px"><div class="stat" style="font-size:42px;line-height:1">${e.days}</div><div class="small muted">${e.days === 1 ? 'Tag' : 'Tage'}</div></div>
-    <div style="flex:1;min-width:220px"><h2 style="margin:0">⏳ bis zur ${e.name} (${e.label})</h2><div class="small muted" style="margin:4px 0">So gut bist du schon vorbereitet: <b>${e.ready} %</b></div><div class="mbar" style="height:12px"><i style="width:${e.ready}%"></i></div></div></div>
-    <h3 style="margin:16px 0 4px">📋 Dein Plan für heute</h3>${plan}</div>`;
+  return `<div class="card" style="margin-bottom:18px;border-color:#ffe08a;box-shadow:0 4px 0 #ffe08a"><div class="row" style="align-items:center;flex-wrap:nowrap"><div class="count"><div class="stat">${e.days}</div><div class="small" style="font-weight:800;color:var(--pri)">${e.days === 1 ? 'Tag' : 'Tage'}</div></div>
+    <div style="flex:1;min-width:0"><h3 style="margin:0">bis zur ${e.name}</h3><div class="small muted">${e.label} · vorbereitet: <b>${e.ready} %</b></div><div class="mbar" style="height:14px"><i style="width:${e.ready}%"></i></div></div></div>
+    <div class="slide-meta" style="margin:16px 0 2px">📋 Dein Plan für heute</div>${plan}</div>`;
 }
 function startExamTest() {
   const e = examInfo(), ids = e ? e.ids : BOOK.defaultFocus;
@@ -2876,13 +3046,13 @@ function buildDaily() {
 const VIEWS = {
   onboarding(edit = false) {
     let av = edit ? S.profile.avatar : AVATARS[0];
-    app().innerHTML = `<div class="card center" style="max-width:620px;margin:20px auto">
-      <div class="mascot">🦉</div><h1>Hallo! Ich bin Euli.</h1>
-      <p>Ich bin deine Mathe-Lehrerin. Wir lernen jeden Tag ein bisschen – mit Erklärungen, Bildern und vielen Tipps. Fehler sind dabei total erlaubt! 💜</p>
-      <h3>Wie heißt du?</h3><input class="name-in" id="nm" maxlength="20" placeholder="Dein Name" value="${edit ? esc(S.profile.name) : ''}">
-      <h3 style="margin-top:18px">Such dir ein Tier aus:</h3><div class="avatars">${AVATARS.map(a => `<button data-av="${a}" class="${a === av ? 'on' : ''}">${a}</button>`).join('')}</div>
-      <button class="btn primary big" id="go">Los geht's! 🚀</button>
-      ${edit ? '' : `<p style="margin-top:22px" class="small muted">Du hast schon mit Euli geübt und dein Fortschritt ist weg?</p><div class="row" style="justify-content:center">${SYNC_ON() ? '<button class="btn" onclick="askCode()">🔗 Familien-Code eingeben</button>' : ''}<button class="btn ghost" onclick="pickSaveUpload()">📂 Spielstand laden</button></div>`}</div>`;
+    app().innerHTML = `<div class="card center" style="max-width:600px;margin:10px auto;padding:26px 20px">
+      <div style="display:flex;justify-content:center">${euli('wave', 140, 'bob')}</div><h1 style="margin-top:10px">Hallo! Ich bin Euli.</h1>
+      <p style="margin-top:0">Ich bin deine Mathe-Lehrerin. Wir lernen jeden Tag ein bisschen – mit Erklärungen, Bildern und vielen Tipps. Fehler sind dabei total erlaubt! 💜</p>
+      <h3 style="margin-top:20px">Wie heißt du?</h3><input class="name-in" id="nm" maxlength="20" placeholder="Dein Name" value="${edit ? esc(S.profile.name) : ''}">
+      <h3 style="margin-top:22px">Such dir ein Tier aus:</h3><div class="avatars">${AVATARS.map(a => `<button data-av="${a}" class="${a === av ? 'on' : ''}" aria-label="Tier ${a}">${a}</button>`).join('')}</div>
+      <button class="btn go big" id="go" style="margin-top:12px;min-width:240px">Los geht's! 🚀</button>
+      ${edit ? '' : `<p style="margin-top:26px" class="small muted">Du hast schon mit Euli geübt und dein Fortschritt ist weg?</p><div class="row" style="justify-content:center">${SYNC_ON() ? '<button class="btn" onclick="askCode()">🔗 Familien-Code eingeben</button>' : ''}<button class="btn ghost" onclick="pickSaveUpload()">📂 Spielstand laden</button></div>`}</div>`;
     $$('[data-av]').forEach(b => b.onclick = () => { $$('[data-av]').forEach(x => x.classList.remove('on')); b.classList.add('on'); av = b.dataset.av; });
     const start = () => { const n = $('#nm').value.trim(); if (!n) { $('#nm').focus(); return toast('Wie heißt du? 🙂'); } S.profile = { name: n, avatar: av, since: S.profile?.since || today() };
       const ok = save() && (() => { try { return (JSON.parse(localStorage.getItem(KEY)) || {}).profile?.name === n; } catch (e) { return false; } })();
@@ -2891,59 +3061,66 @@ const VIEWS = {
   },
 
   home() {
-    const d = dayRec(), g = S.settings.goal, st = streak(), pct = Math.min(1, d.n / g), n = S.profile.name;
+    const d = dayRec(), g = S.settings.goal, st = streak(), pct = Math.min(1, d.n / g), n = esc(S.profile.name);
     const msg = d.goal ? `Wahnsinn, ${n}! Dein Tagesziel ist geschafft. 🎉 Wenn du magst, kannst du noch ein Thema anschauen.`
-      : d.n > 0 ? `Weiter geht's, ${n}! Noch ${g - d.n} Aufgaben bis zum Tagesziel.`
-        : st > 0 ? `Hallo ${n}! Du hast ${st} ${st === 1 ? 'Tag' : 'Tage'} hintereinander geübt 🔥 – heute machen wir weiter!`
+      : d.n > 0 ? `Weiter geht's, ${n}! Noch <b>${g - d.n} Aufgaben</b> bis zum Tagesziel.`
+        : st > 0 ? `Hallo ${n}! Du hast <b>${st} ${st === 1 ? 'Tag' : 'Tage'}</b> hintereinander geübt 🔥 – heute machen wir weiter!`
           : `Hallo ${n}! Schön, dass du da bist. Heute schaffen wir ${g} Aufgaben zusammen – Schritt für Schritt.`;
     const newFocus = S.settings.focus.map(id => TOPIC[id]).filter(t => t && !tp(t.id).lesson);
-    const R = 52, C = 2 * Math.PI * R;
-    app().innerHTML = `<div class="hero"><div class="mascot">🦉</div><div class="bubble">${msg}</div>
-      <svg class="ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="${R}" fill="none" stroke="#ece4f5" stroke-width="12"/><circle cx="60" cy="60" r="${R}" fill="none" stroke="${d.goal ? '#16a34a' : '#7c4dff'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C * pct} ${C}" transform="rotate(-90 60 60)"/><text x="60" y="58" text-anchor="middle" font-size="26" font-weight="900" fill="#2b2340">${d.n}/${g}</text><text x="60" y="80" text-anchor="middle" font-size="13" fill="#7a7090">heute</text></svg></div>
-      <div style="height:18px"></div>${installCard()}${examCard()}
-      <div class="card center" style="margin:0 0 22px;background:linear-gradient(135deg,#7c4dff,#a685ff);color:#fff;border:0">
-        <h2 style="margin:0 0 6px">${d.goal ? '🌟 Bonus-Runde' : '📅 Heutiges Training'}</h2>
-        <p style="margin:0 0 14px">${g} gemischte Aufgaben · Aufwärmen, Wiederholen & Neues · ca. ${Math.round(g * 1.5)} Minuten</p>
-        <button class="btn big" style="background:#fff;color:#7c4dff" onclick="startDaily()">▶ Start</button></div>
-      ${newFocus.length ? `<div class="card" style="margin-bottom:18px;border-color:#7dd3fc"><h3>🏫 Neu in der Schule: ${newFocus[0].icon} ${newFocus[0].title}</h3><p class="muted" style="margin:4px 0 12px">Schau dir zuerst die Erklärung an – dann fällt das Üben viel leichter.</p><button class="btn primary" onclick="go('lesson','${newFocus[0].id}')">📖 Erklärung starten</button></div>` : ''}
+    const R = 50, C = 2 * Math.PI * R;
+    app().innerHTML = `<div class="hero"><div class="say">${euli(d.goal ? 'cheer' : 'wave', 92, 'bob')}<div class="bubble">${msg}</div></div>
+      <svg class="ring" viewBox="0 0 120 120" aria-label="Heute ${d.n} von ${g} Aufgaben"><circle cx="60" cy="60" r="${R}" fill="#fff" stroke="#e7e2f3" stroke-width="13"/><circle cx="60" cy="60" r="${R}" fill="none" stroke="${d.goal ? '#ffc800' : '#58cc02'}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${C * pct} ${C}" transform="rotate(-90 60 60)"/><text x="60" y="60" text-anchor="middle" font-size="27" font-weight="900" fill="#2b2340">${d.n}/${g}</text><text x="60" y="81" text-anchor="middle" font-size="13" font-weight="800" fill="#77708f">heute</text></svg></div>
+      ${installCard()}
+      <div class="cta"><div style="flex:1;min-width:210px"><h2>${d.goal ? '🌟 Bonus-Runde' : '📅 Heutiges Training'}</h2><p>${g} gemischte Aufgaben · Aufwärmen, Wiederholen & Neues · ca. ${Math.round(g * 1.5)} Minuten</p></div>
+        <button class="btn big" onclick="startDaily()">${d.n ? 'Weiter üben' : "Los geht's"} ▶</button></div>
+      ${examCard()}
+      ${newFocus.length ? `<div class="card" style="margin-bottom:18px;border-color:#84d8ff;box-shadow:0 4px 0 #b8e8ff"><div class="row" style="flex-wrap:nowrap;align-items:center"><div style="font-size:44px">${newFocus[0].icon}</div><div style="flex:1"><div class="small" style="font-weight:900;color:var(--blue-d);text-transform:uppercase;letter-spacing:.5px">🏫 Neu in der Schule</div><h3 style="margin:2px 0 4px">${newFocus[0].title}</h3><div class="muted small">Schau dir zuerst die Erklärung an – dann fällt das Üben viel leichter.</div></div></div><button class="btn blue" style="margin-top:12px" onclick="go('lesson','${newFocus[0].id}')">📖 Erklärung starten</button></div>` : ''}
       <div class="grid g2">
-        <div class="card tile" onclick="go('topics')"><div class="ic">🗺️</div><h3>Themen lernen</h3><div class="muted small">Erklärungen & gezieltes Üben</div></div>
-        <div class="card tile" onclick="startMistakes()"><div class="ic">🧰</div><h3>Fehler-Kiste ${S.mistakes.length ? `<span class="badge-n">${S.mistakes.length}</span>` : ''}</h3><div class="muted small">${S.mistakes.length ? 'Knack deine alten Fehler!' : 'Leer – super!'}</div></div>
-        <div class="card tile" onclick="startTest()"><div class="ic">📝</div><h3>Probe-Test</h3><div class="muted small">10 Aufgaben wie in der Stundenwiederholung – ohne Tipps</div></div>
-        <div class="card tile" onclick="go('badges')"><div class="ic">🏆</div><h3>Meine Erfolge</h3><div class="muted small">${S.badges.length} von ${BADGES.length} Abzeichen</div></div>
+        <button class="card tile" onclick="startMistakes()"><div class="ic">🧰</div><h3 style="margin:0">Fehler-Kiste ${S.mistakes.length ? `<span class="badge-n">${S.mistakes.length}</span>` : ''}</h3><div class="muted small">${S.mistakes.length ? 'Knack deine alten Fehler!' : 'Leer – super!'}</div></button>
+        <button class="card tile" onclick="startTest()"><div class="ic">📝</div><h3 style="margin:0">Probe-Test</h3><div class="muted small">10 Aufgaben wie in der Stundenwiederholung – ohne Tipps</div></button>
+        <button class="card tile" onclick="go('topics')"><div class="ic">🗺️</div><h3 style="margin:0">Alle Themen</h3><div class="muted small">Dein Lernpfad durch das Buch</div></button>
+        <button class="card tile" onclick="go('badges')"><div class="ic">🏆</div><h3 style="margin:0">Meine Erfolge</h3><div class="muted small">${S.badges.length} von ${BADGES.length} Abzeichen</div></button>
       </div>
-      <div class="card" style="margin-top:18px;background:var(--warn-soft);border-color:#fcd98a"><b>💡 Euli's Tipp des Tages:</b> ${TIPS[new Date().getDate() % TIPS.length]}</div>
-      <p class="center" style="margin-top:28px"><button class="btn ghost" onclick="go('parentsGate')">👨‍👩‍👧 Für Eltern</button></p>`;
+      <div class="say" style="margin-top:22px">${euli('happy', 64)}<div class="bubble" style="font-weight:600"><b>💡 Tipp des Tages:</b> ${TIPS[new Date().getDate() % TIPS.length]}</div></div>`;
   },
 
   topics() {
-    app().innerHTML = `<h1>🗺️ Themen</h1><p class="muted">Genau wie in deinem Buch <b>„${BOOK.title}“</b>. Tippe auf ein Thema. Mit jedem richtig gelösten Beispiel wächst der grüne Balken – bei 3 Sternen bist du Profi!</p>` +
-      GROUPS.map(g => `<h2 class="group-title">${g.icon} ${g.name}</h2><div class="grid g2">${TOPICS.filter(t => t.group === g.id).map(t => {
-        const s = tp(t.id), focus = S.settings.focus.includes(t.id);
-        return `<div class="card topic" onclick="go('topic','${t.id}')"><div class="ic">${t.icon}</div><div style="flex:1;min-width:0">
-          <div class="t">${t.title}${focus ? '<span class="tag school">🏫 Schule</span>' : ''}${!s.seen && !s.lesson ? '<span class="tag">neu</span>' : ''}</div>
-          <div class="row" style="gap:8px">${starsHTML(starsOf(t.id))}<span class="small muted">Stufe ${levelOf(t.id)} · 📘 ${t.book}</span></div><div class="mbar"><i style="width:${s.m}%"></i></div></div></div>`;
-      }).join('')}</div>`).join('');
+    const ex = (examInfo() || { ids: [] }).ids;
+    const zig = [0, 56, 84, 56, 0, -56, -84, -56];
+    app().innerHTML = `<div class="say" style="max-width:640px;margin:0 auto 8px">${euli('happy', 76)}<div class="bubble">Das ist dein <b>Lernpfad</b> – genau wie im Buch „${BOOK.title}“. Tippe auf eine Station!</div></div>
+      <div class="legend" style="justify-content:center;margin-top:12px"><span>📝 Schularbeit</span><span>🏫 gerade in der Schule</span><span>⭐ = 3 Sterne</span></div>` +
+      GROUPS.map((g, gi) => {
+        const [uc, ud] = UNIT_COLORS[gi % UNIT_COLORS.length], list = TOPICS.filter(t => t.group === g.id); if (!list.length) return '';
+        const [letter, ...rest] = g.name.split(' · ');
+        return `<div class="unit" style="background:${uc}"><div class="uic">${g.icon}</div><div><div class="ul">${rest.length ? 'Kapitel ' + letter : 'Extra'}</div><h2>${rest.length ? rest.join(' · ') : g.name}</h2></div></div>
+          <div class="path" style="--uc:${uc};--ud:${ud}">${list.map((t, i) => {
+            const s = tp(t.id), st = starsOf(t.id), state = st === 3 ? 'gold' : (s.seen || s.lesson) ? '' : 'fresh', R = 46, C = 2 * Math.PI * R;
+            const flag = ex.includes(t.id) ? '📝' : S.settings.focus.includes(t.id) ? '🏫' : '';
+            return `<button class="node" style="transform:translateX(${zig[i % zig.length]}px)" onclick="go('topic','${t.id}')" aria-label="${t.title}">
+              <div class="disc ${state}">${t.icon}${state === '' ? `<svg class="pring" viewBox="0 0 102 102"><circle cx="51" cy="51" r="${R}" fill="none" stroke="#e7e2f3" stroke-width="6"/><circle cx="51" cy="51" r="${R}" fill="none" stroke="${uc}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C * s.m / 100} ${C}" transform="rotate(-90 51 51)"/></svg>` : ''}${flag ? `<span class="flag">${flag}</span>` : ''}</div>
+              <div class="nt">${t.title}</div><div class="nm">${starsHTML(st)}</div></button>`;
+          }).join('')}</div>`;
+      }).join('');
   },
 
   topic(id) {
-    const t = TOPIC[id], s = tp(id);
-    app().innerHTML = `<button class="btn ghost" onclick="go('topics')">← Alle Themen</button>
-      <div class="card" style="margin-top:14px"><div class="row"><div style="font-size:56px">${t.icon}</div><div style="flex:1"><h1 style="margin:0">${t.title}</h1><div class="muted">${t.desc}</div><div class="small" style="margin-top:4px">📘 Im Buch: <b>${t.book}</b></div></div></div>
-      <div class="row" style="margin:14px 0">${starsHTML(starsOf(id))}<span class="muted">Können: ${s.m}% · Stufe ${levelOf(id)} von 3 · ${s.seen} Aufgaben gerechnet${s.seen ? ` · ${Math.round(s.ok / s.seen * 100)}% richtig` : ''}</span></div>
-      <div class="mbar" style="height:12px"><i style="width:${s.m}%"></i></div>
-      <div class="row" style="margin-top:20px"><button class="btn ${s.lesson ? '' : 'primary'} big" onclick="go('lesson','${id}')">📖 Erklärung${s.lesson ? ' nochmal' : ''}</button><button class="btn ${s.lesson ? 'primary' : ''} big" onclick="startTopic('${id}')">✏️ Üben (8 Aufgaben)</button></div>
+    const t = TOPIC[id], s = tp(id), gi = GROUPS.findIndex(g => g.id === t.group), [uc, ud] = UNIT_COLORS[Math.max(0, gi) % UNIT_COLORS.length];
+    app().innerHTML = `<button class="btn ghost" onclick="go('topics')">← Lernpfad</button>
+      <div class="card" style="margin-top:16px"><div class="topic-hero"><div class="big-ic" style="background:${uc};box-shadow:0 6px 0 ${ud}">${t.icon}</div><div style="flex:1;min-width:220px"><div class="slide-meta">📘 ${t.book}</div><h1 style="margin:2px 0 4px">${t.title}</h1><div class="muted">${t.desc}</div></div></div>
+      <div class="stat-chips"><span class="chip">${starsHTML(starsOf(id))}</span><span class="chip">🎚️ Stufe ${levelOf(id)} von 3</span><span class="chip">✏️ ${s.seen} Aufgaben</span>${s.seen ? `<span class="chip">🎯 ${Math.round(s.ok / s.seen * 100)} % richtig</span>` : ''}</div>
+      <div class="small" style="font-weight:800;color:var(--muted)">Können: ${s.m} %</div><div class="mbar" style="height:16px"><i style="width:${s.m}%"></i></div>
+      <div class="row" style="margin-top:22px"><button class="btn ${s.lesson ? 'ghost' : 'blue'} big" onclick="go('lesson','${id}')">📖 Erklärung${s.lesson ? ' nochmal' : ''}</button><button class="btn ${s.lesson ? 'go' : 'ghost'} big" onclick="startTopic('${id}')">✏️ Üben (8 Aufgaben)</button></div>
       ${S.notes[id] ? `<div class="merke" style="margin-top:18px">So habe ich es erklärt:<br><i>„${esc(S.notes[id])}“</i></div>` : ''}</div>
-      <div class="card" style="margin-top:16px"><h3>Wie funktionieren die Stufen?</h3><p class="small muted" style="margin:0">Stufe 1 = Grundlagen · Stufe 2 = etwas schwieriger · Stufe 3 = Profi & Textaufgaben. Die Stufe passt sich automatisch an: Wenn du sicher wirst, wird es schwieriger. Wenn es hakt, wird es wieder leichter.</p></div>`;
+      <div class="say" style="margin-top:18px">${euli('happy', 64)}<div class="bubble" style="font-weight:600"><b>So funktionieren die Stufen:</b> Stufe 1 = Grundlagen · Stufe 2 = etwas schwieriger · Stufe 3 = Profi & Textaufgaben. Wenn du sicher wirst, wird es schwieriger. Wenn es hakt, wird es wieder leichter.</div></div>`;
   },
 
   lesson(id, i = 0) {
     const t = TOPIC[id];
     const slides = [...t.lesson, { kind: 'example', h: '👀 Ich zeige dir ein Beispiel' }, { kind: 'check', h: '✏️ Jetzt du!' }, { kind: 'reflect', h: '💭 Erklär es in deinen Worten' }];
     const sl = slides[i];
-    app().innerHTML = `<div class="lesson-head"><button class="btn ghost" onclick="go('topic','${id}')">✕</button><div class="dots">${slides.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div><button class="icon-btn" id="sayl" title="Vorlesen">🔊</button></div>
-      <div class="card slide" style="margin-top:14px"><div class="muted small">${t.icon} ${t.title} · 📘 ${t.book} · Teil ${i + 1} von ${slides.length}</div><h1>${sl.h}</h1><div id="sb">${sl.html || ''}</div>${sl.widget ? '<div class="widget" data-w></div>' : ''}</div>
-      <div class="row" style="justify-content:space-between;margin-top:16px"><button class="btn ghost" id="prev" ${i ? '' : 'disabled'}>← Zurück</button><button class="btn primary big" id="next">${i === slides.length - 1 ? 'Fertig – jetzt üben! 🚀' : 'Weiter →'}</button></div>`;
+    app().innerHTML = `<div class="focusbar"><button class="x-btn" onclick="go('topic','${id}')" aria-label="Schließen">✕</button><div class="dots">${slides.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div><button class="icon-btn" id="sayl" title="Vorlesen">🔊</button></div>
+      <div class="card slide"><div class="slide-meta">${t.icon} ${t.title} · Teil ${i + 1} von ${slides.length} · 📘 ${t.book}</div><h1>${sl.h}</h1><div id="sb">${sl.html || ''}</div>${sl.widget ? '<div class="widget" data-w></div>' : ''}</div>
+      <div class="lessonbar"><div class="inner"><button class="btn ghost big" id="prev" ${i ? '' : 'disabled'} aria-label="Zurück">←</button><button class="btn ${i === slides.length - 1 ? 'go' : 'blue'} big" id="next">${i === slides.length - 1 ? 'Fertig – jetzt üben! 🚀' : 'Weiter'}</button></div></div>`;
     if (sl.widget) WIDGETS[sl.widget]($('[data-w]'), sl.wp);
     $('#sayl').onclick = () => say(sl.h + '. ' + $('#sb').innerHTML);
     $('#prev').onclick = () => go('lesson', id, i - 1);
@@ -2952,7 +3129,7 @@ const VIEWS = {
     const sb = $('#sb');
     if (sl.kind === 'example') {
       const ex = makeTask(id, 1); let k = 0;
-      sb.innerHTML = `<p class="muted">Schau genau zu, wie ich denke. Klicke dich Schritt für Schritt durch.</p><div class="task"><div class="q">${ex.q}</div>${ex.visual ? `<div class="visual">${ex.visual}</div>` : ''}</div><ol class="steps" id="exs"></ol><div class="row" style="justify-content:center"><button class="btn primary" id="stp">Nächster Schritt 👣</button></div>`;
+      sb.innerHTML = `<p class="muted">Schau genau zu, wie ich denke. Klicke dich Schritt für Schritt durch.</p><div class="task"><div class="q">${ex.q}</div>${ex.visual ? `<div class="visual">${ex.visual}</div>` : ''}</div><ol class="steps" id="exs"></ol><div class="row" style="justify-content:center"><button class="btn blue" id="stp">Nächster Schritt 👣</button></div>`;
       $('#stp').onclick = () => {
         $('#exs').insertAdjacentHTML('beforeend', `<li>${ex.steps[k++]}</li>`);
         if (k >= ex.steps.length) { $('#stp').replaceWith(Object.assign(document.createElement('div'), { className: 'merke', innerHTML: `Lösung: <b>${answerText(ex)}</b>` })); $('#next').focus(); }
@@ -2961,7 +3138,7 @@ const VIEWS = {
     if (sl.kind === 'check') {
       sb.innerHTML = `<p class="muted">Probier jetzt selbst eine Aufgabe. Wenn du nicht weiterweißt, nimm einen Tipp!</p><div id="tb"></div>`;
       const ct = makeTask(id, 1);
-      mountTask($('#tb'), ct, { onResult: r => record(ct, r), onNext: next, nextLabel: 'Weiter →' });
+      mountTask($('#tb'), ct, { onResult: r => record(ct, r), onNext: next, nextLabel: 'Weiter →' }); $('#tb').classList.add('inline-task');
     }
     if (sl.kind === 'reflect') {
       sb.innerHTML = `<p>Stell dir vor, deine Freundin war krank und hat das Thema verpasst. Wie würdest du es ihr erklären? Schreib es auf – das hilft deinem Gehirn, es sich richtig zu merken! 🧠</p><textarea id="note" placeholder="Also, das funktioniert so: ...">${esc(S.notes[id] || '')}</textarea><p class="small muted">Das ist freiwillig – du kannst auch einfach auf „Fertig“ klicken.</p>`;
@@ -2971,12 +3148,12 @@ const VIEWS = {
   practice(sess) {
     const it = sess.list[sess.i];
     const task = it.task || makeTask(it.topic, levelOf(it.topic));
-    app().innerHTML = `<div class="task-wrap"><div class="row" style="justify-content:space-between"><button class="btn ghost" onclick="go('home')">✕ Beenden</button><b>Aufgabe ${sess.i + 1} von ${sess.list.length}</b><span class="pill">✅ ${sess.res.filter(r => r.ok).length}</span></div>
-      <div class="progress"><i style="width:${sess.i / sess.list.length * 100}%"></i></div><div class="card" id="tb"></div></div>`;
+    let combo = 0; for (let k = sess.res.length - 1; k >= 0 && sess.res[k].ok && !sess.res[k].tries; k--) combo++;
+    app().innerHTML = `<div class="task-wrap practice-task"><div class="focusbar"><button class="x-btn" onclick="quitPractice(${sess.i})" aria-label="Beenden">✕</button><div class="progress" title="Aufgabe ${sess.i + 1} von ${sess.list.length}"><i style="width:${sess.i / sess.list.length * 100}%"></i></div><div class="combo ${combo ? '' : 'zero'}" title="richtig hintereinander">🔥 ${combo}</div></div><div id="tb"></div></div>`;
     mountTask($('#tb'), task, {
-      onResult: r => { sess.res.push(Object.assign({ topic: task.topic }, r)); record(task, r); },
+      onResult: r => { sess.res.push(Object.assign({ topic: task.topic }, r)); record(task, r); const pi = $('.progress i'); if (pi) pi.style.width = (sess.i + 1) / sess.list.length * 100 + '%'; if (r.ok && !r.tries) { const c = $('.combo'); if (c) { c.classList.remove('zero'); c.textContent = '🔥 ' + (combo + 1); } } },
       onNext: () => { sess.i++; sess.i >= sess.list.length ? go('summary', sess) : go('practice', sess); },
-      nextLabel: sess.i === sess.list.length - 1 ? 'Fertig 🏁' : 'Weiter ➜', test: !!sess.test,
+      nextLabel: sess.i === sess.list.length - 1 ? 'Fertig 🏁' : 'Weiter', test: !!sess.test,
     });
   },
 
@@ -2989,20 +3166,22 @@ const VIEWS = {
     const byTopic = {}; sess.res.forEach(r => { (byTopic[r.topic] ||= { n: 0, ok: 0 }); byTopic[r.topic].n++; if (r.ok) byTopic[r.topic].ok++; });
     const weak = Object.entries(byTopic).filter(([, v]) => v.ok / v.n < .6).map(([k]) => TOPIC[k]);
     const testInfo = sess.test ? `<div class="card" style="text-align:left;margin:14px 0"><h3>📝 Ergebnis Probe-Test: ${ok} von ${n} Punkten (${Math.round(ratio * 100)} %)</h3>${Object.entries(byTopic).map(([k, v]) => `<div>${TOPIC[k].icon} ${TOPIC[k].title}: <b>${v.ok}/${v.n}</b> ${v.ok === v.n ? '✅' : v.ok / v.n >= .5 ? '🟡' : '🔴'}</div>`).join('')}<p class="small muted">🔴 = hier lohnt sich die Erklärung nochmal · Alle falschen Aufgaben sind jetzt in der Fehler-Kiste.</p></div>` : '';
-    app().innerHTML = `<div class="card center" style="max-width:640px;margin:10px auto"><div class="big-emoji">${emoji}</div><h1>${sess.test ? 'Probe-Test fertig!' : 'Geschafft!'}</h1><p style="font-size:20px">${msg}</p>${testInfo}
-      <div class="grid g3" style="margin:18px 0"><div><div class="stat">${ok}/${n}</div><div class="muted small">richtig</div></div><div><div class="stat">${first}</div><div class="muted small">beim 1. Versuch</div></div><div><div class="stat">+${xp}</div><div class="muted small">XP</div></div></div>
-      ${weak.length ? `<div class="merke" style="text-align:left">Euli empfiehlt: Schau dir nochmal die Erklärung zu <b>${weak.map(t => t.title).join('</b> und <b>')}</b> an. 📖</div><div class="row" style="justify-content:center;margin-bottom:12px">${weak.slice(0, 2).map(t => `<button class="btn" onclick="go('lesson','${t.id}')">${t.icon} ${t.title}</button>`).join('')}</div>` : ''}
-      ${!STORAGE_OK && !SAVE_HANDLE ? `<div class="merke" style="text-align:left;border-color:#e5484d">Damit dein Fortschritt nicht verloren geht: <div class="row" style="margin-top:6px">${saveFileButtons()}</div></div>` : ''}
-      <div class="row" style="justify-content:center"><button class="btn primary big" onclick="go('home')">🏠 Zur Startseite</button></div></div>`;
+    const mood = ratio >= .7 ? 'cheer' : ratio >= .5 ? 'happy' : 'comfort';
+    app().innerHTML = `<div class="task-wrap center" style="padding-top:10px"><div style="display:flex;justify-content:center">${euli(mood, 150, 'bob')}</div><h1 style="margin-top:8px">${sess.test ? 'Probe-Test fertig!' : 'Geschafft!'}</h1><p style="font-size:20px;font-weight:700;margin-top:0">${msg}</p>
+      <div class="result-tiles"><div class="rt" style="--c:#ffc800"><div class="rl">XP</div><div class="rv">⚡ ${xp}</div></div><div class="rt" style="--c:#58cc02"><div class="rl">Richtig</div><div class="rv">🎯 ${ok}/${n}</div></div><div class="rt" style="--c:#1cb0f6"><div class="rl">1. Versuch</div><div class="rv">💪 ${first}</div></div></div>
+      ${testInfo}
+      ${weak.length ? `<div class="merke" style="text-align:left">Euli empfiehlt: Schau dir nochmal die Erklärung zu <b>${weak.map(t => t.title).join('</b> und <b>')}</b> an. 📖</div><div class="row" style="justify-content:center;margin-bottom:14px">${weak.slice(0, 2).map(t => `<button class="btn blue" onclick="go('lesson','${t.id}')">${t.icon} ${t.title}</button>`).join('')}</div>` : ''}
+      ${!STORAGE_OK && !SAVE_HANDLE ? `<div class="merke" style="text-align:left;border-color:#ffc1c1">Damit dein Fortschritt nicht verloren geht: <div class="row" style="margin-top:6px">${saveFileButtons()}</div></div>` : ''}
+      <button class="btn go big wide" style="max-width:420px;margin-top:8px" onclick="go('home')">Weiter</button></div>`;
     if (ratio >= .7) { confetti(180); sndWin(); }
   },
 
   badges() {
     const L = lvl();
-    app().innerHTML = `<h1>🏆 Meine Erfolge</h1><div class="card"><div class="row"><div style="font-size:60px">${S.profile.avatar}</div><div style="flex:1"><h2 style="margin:0">${esc(S.profile.name)}</h2><div><b>Level ${L.l}</b> – ${L.title}</div><div class="progress" style="margin:8px 0 2px"><i style="width:${L.pct}%"></i></div><div class="small muted">${S.xp} XP · noch ${L.need} XP bis Level ${L.l + 1}</div></div></div>
-      <div class="grid g3" style="margin-top:14px;text-align:center"><div><div class="stat">${S.total}</div><div class="small muted">Aufgaben</div></div><div><div class="stat">🔥 ${streak()}</div><div class="small muted">Tage am Stück</div></div><div><div class="stat">${TOPICS.reduce((a, t) => a + starsOf(t.id), 0)}</div><div class="small muted">Sterne</div></div></div></div>
-      <h2>Abzeichen</h2><div class="grid g3">${BADGES.map(b => `<div class="card badge ${S.badges.includes(b.id) ? '' : 'locked'}"><div class="ic">${b.icon}</div><b>${b.name}</b><div class="small muted">${b.desc}</div></div>`).join('')}</div>
-      <p class="center" style="margin-top:20px"><button class="btn ghost" onclick="editProfile()">✏️ Name / Tier ändern</button></p>`;
+    app().innerHTML = `<h1>🏆 Meine Erfolge</h1><div class="card"><div class="row" style="flex-wrap:nowrap"><div class="big-ic" style="font-size:54px;width:88px;height:88px;border-radius:50%;display:grid;place-items:center;background:var(--pri-soft);box-shadow:0 5px 0 var(--line2);flex:none">${S.profile.avatar}</div><div style="flex:1;min-width:0"><h2 style="margin:0">${esc(S.profile.name)}</h2><div><b>Level ${L.l}</b> – ${L.title}</div><div class="progress" style="margin:8px 0 2px"><i style="width:${L.pct}%;background:var(--pri)"></i></div><div class="small muted">${S.xp} XP · noch ${L.need} XP bis Level ${L.l + 1}</div></div></div>
+      <div class="result-tiles" style="margin-bottom:0"><div class="rt" style="--c:#1cb0f6"><div class="rl">Aufgaben</div><div class="rv">✏️ ${S.total}</div></div><div class="rt" style="--c:#ff9600"><div class="rl">Tage am Stück</div><div class="rv">🔥 ${streak()}</div></div><div class="rt" style="--c:#ffc800"><div class="rl">Sterne</div><div class="rv">⭐ ${TOPICS.reduce((a, t) => a + starsOf(t.id), 0)}</div></div></div></div>
+      <h2>Abzeichen <span class="muted small">${S.badges.length} von ${BADGES.length}</span></h2><div class="grid g3">${BADGES.map(b => `<div class="card badge ${S.badges.includes(b.id) ? '' : 'locked'}"><div class="ic">${b.icon}</div><b>${b.name}</b><div class="small muted">${b.desc}</div></div>`).join('')}</div>
+      <p class="center" style="margin-top:22px"><button class="btn ghost" onclick="editProfile()">✏️ Name / Tier ändern</button></p>`;
   },
 
   parentsGate() {
