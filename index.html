@@ -391,8 +391,11 @@ function F(n, d) { return d === 1 ? `${n}` : `<span class="fr"><span>${n}</span>
 const FA = ([n, d]) => F(n, d);
 
 function parseNum(s) {
-  s = String(s ?? '').trim().replace(/\s/g, '').replace(/€|°|%|'/g, '').replace(/[−–]/g, '-').replace(',', '.');
-  if (s === '' || s === '.' || isNaN(+s)) return null;
+  s = String(s ?? '').trim().replace(/\s/g, '').replace(/^[a-zA-Zα-ωäöü☐]*=/, '')  // „x = 5“, „β = 40“
+    .replace(/(\d)(?:°C|°|grad|cm|mm|dm|km|m|euro|€|%|tage?n?|stück|uhr)\.?$/i, '$1').replace(/^(?:€|'|\+)/, '').replace(/[−–]/g, '-');
+  if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');  // 3.888 = Tausenderpunkt
+  s = s.replace(',', '.');
+  if (s === '' || s === '.' || s === '-' || isNaN(+s)) return null;
   return +s;
 }
 function divisors(n) { const r = []; for (let i = 1; i <= n; i++) if (n % i === 0) r.push(i); return r; }
@@ -1828,7 +1831,7 @@ upsert({ id: 'ganzrech', icon: '🛗', title: 'Ganze Zahlen addieren & subtrahie
     if (L === 2) {
       if (Math.random() < 0.35) {
         const s = rnd(0, 4), d = rnd(s + 1, s + 4);
-        return T({ q: `Du bist im Lift im <b>${s === 0 ? 'Erdgeschoß (0)' : s + '. Stock'}</b> und fährst <b>${d}</b> Stockwerke nach unten. In welchem Stockwerk kommst du an?`, answer: s - d, hints: ['Unter dem Erdgeschoß (0) kommen −1, −2, …', `Rechne ${s} − ${d}.`], steps: [`${s} − ${d}`, `= <b>${sg(s - d)}</b> (${s - d < 0 ? 'unter dem Erdgeschoß' : ''})`], traps: [{ v: d - s, msg: 'Du fährst nach UNTEN – unter das Erdgeschoß. Das Ergebnis ist negativ!' }] });
+        return T({ q: `Du bist im Lift im <b>${s === 0 ? 'Erdgeschoß (0)' : s + '. Stock'}</b> und fährst <b>${d}</b> ${d === 1 ? 'Stockwerk' : 'Stockwerke'} nach unten. In welchem Stockwerk kommst du an?`, answer: s - d, hints: ['Unter dem Erdgeschoß (0) kommen −1, −2, …', `Rechne ${s} − ${d}.`], steps: [`${s} − ${d}`, `= <b>${sg(s - d)}</b> (${s - d < 0 ? 'unter dem Erdgeschoß' : ''})`], traps: [{ v: d - s, msg: 'Du fährst nach UNTEN – unter das Erdgeschoß. Das Ergebnis ist negativ!' }] });
       }
       const a = rnd(-8, 6), b = rnd(2, 9), r = a - b;
       return T({ q: `${sg(a)} − ${b} = ?`, answer: r, visual: svgNumLine({ min: -18, max: 12, sel: a }), hints: [`Starte bei ${sg(a)}.`, `− ${b} heißt: ${b} Schritte nach links.`], steps: [`Start bei ${sg(a)}`, `${b} Schritte nach links → <b>${sg(r)}</b>`], traps: [{ v: a + b, msg: 'Minus heißt nach LINKS gehen.' }, { v: -r, msg: 'Fast – aber das Vorzeichen stimmt nicht. Schau auf die Zahlengerade!' }] });
@@ -2503,9 +2506,9 @@ BOOK.boost = { teilbar: 1.8, ggtkgv: 1.5, ganzrech: 1.3, koordinaten: 1.3 };
     if (k === 1) { const a = rnd(-12, 8), b = rnd(3, 12), c = rnd(3, 15), r1 = a + b, res = r1 - c;
       return T({ q: `${sg(a)} + ${b} − ${c} = ?`, answer: res, hints: ['Rechne von links nach rechts – Schritt für Schritt.', `Zuerst ${sg(a)} + ${b} = ${sg(r1)}.`], steps: [`${sg(a)} + ${b} = ${sg(r1)}`, `${sg(r1)} − ${c} = <b>${sg(res)}</b>`], traps: [{ v: -res, msg: 'Das Vorzeichen stimmt nicht – kontrolliere mit der Zahlengeraden!' }] }); }
     if (k === 2) { const a = rnd(-8, 5), d = rnd(4, 14), e = a - d;
-      return T({ q: `Am Abend hat es <b>${sg(a)} °C</b>. In der Nacht <b>sinkt</b> die Temperatur um <b>${d} Grad</b>. Wie kalt ist es dann?`, answer: e, unit: '°C', hints: ['Sinken = minus rechnen.', `${sg(a)} − ${d} = ?`], steps: [`${sg(a)} − ${d}`, `= <b>${sg(e)} °C</b>`], traps: [{ v: a + d, msg: 'Die Temperatur SINKT – es wird kälter, also minus!' }] }); }
-    if (k === 3) { const a = -rnd(3, 20) * 5, u = rnd(2, 8) * 5;
-      return T({ q: `Ein Taucher ist in <b>${sg(a)} m</b> Tiefe. Er steigt <b>${u} m</b> nach oben. In welcher Tiefe ist er jetzt?`, answer: a + u, unit: 'm', hints: ['Nach oben = plus rechnen.', `${sg(a)} + ${u} = ?`], steps: [`${sg(a)} + ${u}`, `= <b>${sg(a + u)} m</b>`], traps: [{ v: a - u, msg: 'Er steigt nach OBEN – die Zahl wird größer!' }] }); }
+      return T({ q: `Am Abend hat es <b>${sg(a)} °C</b>. In der Nacht <b>sinkt</b> die Temperatur um <b>${d} Grad</b>. Wie viel Grad hat es dann?`, answer: e, unit: '°C', hints: ['Sinken = minus rechnen.', `${sg(a)} − ${d} = ?`], steps: [`${sg(a)} − ${d}`, `= <b>${sg(e)} °C</b>`], traps: [{ v: a + d, msg: 'Die Temperatur SINKT – es wird kälter, also minus!' }] }); }
+    if (k === 3) { const a = -rnd(5, 20) * 5, u = rnd(2, Math.min(8, -a / 5 - 1)) * 5;
+      return T({ q: `Ein Taucher ist auf <b>${sg(a)} m</b> (unter dem Meeresspiegel). Er steigt <b>${u} m</b> nach oben. Auf welcher Höhe ist er jetzt? <span class="small muted">(unter dem Meer = Minus)</span>`, answer: a + u, unit: 'm', hints: ['Nach oben = plus rechnen.', `${sg(a)} + ${u} = ?`], steps: [`${sg(a)} + ${u}`, `= <b>${sg(a + u)} m</b>`], traps: [{ v: a - u, msg: 'Er steigt nach OBEN – die Zahl wird größer!' }] }); }
     if (k === 4) { const a = rnd(-5, 12) * 10, w = rnd(3, 15) * 10;
       return T({ q: `Kontostand: <b>${sg(a)} €</b>. Tim hebt <b>${w} €</b> ab. Wie hoch ist der Kontostand jetzt?`, answer: a - w, unit: '€', hints: ['Abheben = Geld wird weniger → minus.', `${sg(a)} − ${w} = ?`], steps: [`${sg(a)} − ${w}`, `= <b>${sg(a - w)} €</b>`], traps: [{ v: w - a, msg: 'Das Vorzeichen stimmt nicht – nach dem Abheben ist der Kontostand kleiner.' }] }); }
     const a = rnd(-15, -2), r = rnd(-6, 9), x = r - a;
@@ -2644,7 +2647,7 @@ gen4('ganzrech', [
   () => { const k = rnd(1, 2); if (k === 1) { const x = rnd(5, 30), r = -rnd(2, 25); return T({ q: `Ergänze: &nbsp; <b>☐ − ${x} = ${sg(r)}</b>`, answer: r + x, hints: ['Rechne rückwärts: ☐ = Ergebnis + ' + x, `${sg(r)} + ${x} = ?`], steps: [`☐ = ${sg(r)} + ${x}`, `☐ = <b>${sg(r + x)}</b>`, `Probe: ${sg(r + x)} − ${x} = ${sg(r)} ✔`], traps: [{ v: r - x, msg: 'Rückwärts rechnen: Aus „− ' + x + '“ wird „+ ' + x + '“.' }] }); }
     const a = -rnd(15, 60), r = -rnd(1, 14); return T({ q: `Ergänze: &nbsp; <b>${sg(a)} + ☐ = ${sg(r)}</b>`, answer: r - a, hints: ['Wie weit ist es auf der Zahlengeraden von ' + sg(a) + ' bis ' + sg(r) + '?', `☐ = ${sg(r)} − (${sg(a)})`], steps: [`Von ${sg(a)} bis ${sg(r)}: ${r - a} Schritte nach rechts`, `☐ = <b>${r - a}</b>`] }); },
   () => { const s0 = -rnd(15, 45) * 10, up = rnd(5, 20) * 10, dn = rnd(5, 25) * 10, r = s0 + up - dn;
-    return T({ q: `Ein Förderkorb im Bergwerk ist in <b>${sg(s0)} m</b> Tiefe. Er fährt <b>${up} m nach oben</b> und dann <b>${dn} m nach unten</b>. In welcher Tiefe ist er jetzt?`, answer: r, unit: 'm', hints: ['Nach oben = plus, nach unten = minus.', `${sg(s0)} + ${up} = ${sg(s0 + up)}`], steps: [`${sg(s0)} + ${up} = ${sg(s0 + up)}`, `${sg(s0 + up)} − ${dn} = <b>${sg(r)} m</b>`] }); },
+    return T({ q: `Ein Förderkorb im Bergwerk ist auf <b>${sg(s0)} m</b>. Er fährt <b>${up} m nach oben</b> und dann <b>${dn} m nach unten</b>. Auf welcher Höhe ist er jetzt? <span class="small muted">(unter der Erde = Minus)</span>`, answer: r, unit: 'm', hints: ['Nach oben = plus, nach unten = minus.', `${sg(s0)} + ${up} = ${sg(s0 + up)}`], steps: [`${sg(s0)} + ${up} = ${sg(s0 + up)}`, `${sg(s0 + up)} − ${dn} = <b>${sg(r)} m</b>`] }); },
 ]);
 
 gen4('winkel', [
@@ -2809,7 +2812,7 @@ gen4('koordinaten', [
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '01.11.2026 08:57';
+const APP_VER = '02.11.2026 12:36';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -3165,7 +3168,8 @@ function evaluate(t, box, picked) {
   }
   if (t.type === 'set') {
     const raw = $('[data-s]', box).value.trim(); if (!raw) return { empty: true };
-    const vals = raw.replace(/[{}]/g, '').split(/[;,\s]+/).filter(Boolean).map(parseNum);
+    const body = raw.replace(/^[^{]*=\s*/, '').replace(/[{}]/g, '');  // „T24 = {1, 2, …}“ erlaubt
+    const vals = (/[;,<]/.test(body) ? body.split(/[;,<]+/) : body.split(/\s+/)).map(x => x.trim()).filter(Boolean).map(parseNum);  // „2 130, 765“: Leerzeichen als Tausendertrennung
     if (vals.some(v => v === null)) return { empty: true, msg: 'Bitte nur Zahlen eingeben, mit Beistrich getrennt – z. B. 1, 2, 3' };
     if (t.ordered) {
       if (vals.length === t.answer.length && vals.every((v, k) => v === t.answer[k])) return { ok: true };
@@ -3185,7 +3189,7 @@ function evaluate(t, box, picked) {
     return { ok: false, trap: { msg } };
   }
   if (t.type === 'prod') {
-    const raw = $('[data-p]', box).value.trim(); if (!raw) return { empty: true };
+    const raw = $('[data-p]', box).value.trim().replace(/^\d+\s*=/, ''); if (!raw) return { empty: true };
     const SUP = { '²': 2, '³': 3, '⁴': 4, '⁵': 5 }, fs = [];
     for (const tok of raw.split(/[·*x×.\s]+/).filter(Boolean)) {
       const m = tok.match(/^(\d+)(?:\^(\d+)|([²³⁴⁵]))?$/); if (!m) return { empty: true, msg: 'Schreib die Faktoren mit Malpunkt: z. B. 2 · 2 · 3' };
@@ -3209,7 +3213,10 @@ function evaluate(t, box, picked) {
   }
   if (t.type === 'num') {
     const v = parseNum($('[data-a]', box).value); if (v === null) return { empty: true };
-    const ok = Math.abs(v - t.answer) < 1e-6; return { ok, trap: ok ? null : t.traps.find(x => Math.abs(x.v - v) < 1e-6) };
+    const ok = Math.abs(v - t.answer) < 1e-6, trap = ok ? null : t.traps.find(x => Math.abs(x.v - v) < 1e-6);
+    // Sachaufgabe richtig gerechnet, nur das Minus vergessen („9 Grad unter null“) → kein Fehlversuch
+    if (!ok && !trap && t.answer < 0 && v === -t.answer && /°C|m|€/.test(t.unit || '')) return { partial: `Die Zahl ${v} stimmt! 👍 Aber ${t.unit === '€' ? 'Schulden' : 'unter null'} schreibt man mit <b>Minus</b>: −${v}` };
+    return { ok, trap };
   }
   const n = parseNum($('[data-n]', box).value), dr = $('[data-d]', box).value.trim(), d = dr === '' ? 1 : parseNum(dr);
   if (n === null || d === null) return { empty: true };
