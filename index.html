@@ -356,6 +356,8 @@ body[data-focus] main:has(.keypad){padding-bottom:380px!important}
 .keypad.kp2 .key{height:44px;font-size:20px;padding:0}
 body[data-focus] main:has(.kp2){padding-bottom:250px!important}
 @media (max-width:760px) and (max-height:700px){.practice-task .visual svg{max-height:27vh}.task .q{font-size:20px;line-height:1.4}}
+
+.key.del{-webkit-touch-callout:none}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7c4dff">
@@ -3081,7 +3083,7 @@ BOOK.boost = { symmetrie: 1.5, ganzrech: 1.6, teilbar: 1.6, ggtkgv: 1.4, ganz: 1
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '18.11.2026 19:10';
+const APP_VER = '18.11.2026 19:32';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -3514,9 +3516,17 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
   if (kp) {
     let act = inputs[0];
     inputs.forEach(i => { i.setAttribute('inputmode', 'none'); i.addEventListener('focus', () => act = i); });
-    kp.addEventListener('pointerdown', e => e.preventDefault());  // Fokus bleibt im Eingabefeld
+    // ⌫ gedrückt halten = ganzes Feld löschen (einzeln tippen löscht ein Zeichen)
+    let holdT = null, held = false, delTaps = [];
+    const clearAll = () => { if (done || !act || act.disabled || !act.value) return; held = true; buzz(25); act.value = ''; act.dispatchEvent(new Event('input', { bubbles: true })); act.focus(); };
+    kp.addEventListener('pointerdown', e => { e.preventDefault(); held = false; if (e.target.closest('[data-k="del"]')) holdT = setTimeout(clearAll, 450); });  // Fokus bleibt im Eingabefeld
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => kp.addEventListener(ev, () => clearTimeout(holdT)));
+    kp.addEventListener('contextmenu', e => e.preventDefault());
     kp.addEventListener('click', e => {
-      const k = e.target.closest('[data-k]')?.dataset.k; if (!k || done || !act || act.disabled) return; buzz(8);
+      const k = e.target.closest('[data-k]')?.dataset.k; if (!k || done || !act || act.disabled) return;
+      if (k === 'del' && held) { held = false; return; }
+      if (k === 'del' && !S.delHint) { const n = Date.now(); delTaps = [...delTaps.filter(x => n - x < 1500), n]; if (delTaps.length >= 3) { S.delHint = true; save(); toast('Tipp: <b>⌫ gedrückt halten</b> löscht alles auf einmal'); } }
+      buzz(8);
       const a = act.selectionStart ?? act.value.length, b = act.selectionEnd ?? a;
       if (k === 'next') { const n = inputs[(inputs.indexOf(act) + 1) % inputs.length]; n.focus(); act = n; return; }
       if (k === 'del') { if (a !== b) act.setRangeText('', a, b, 'end'); else if (a > 0) act.setRangeText('', a - 1, a, 'end'); }
@@ -3589,8 +3599,8 @@ function keypadHTML(t) {
   const multi = t.type === 'frac' || t.type === 'point', K = (k, l = k, c = '') => `<button type="button" class="key ${c}" data-k="${k}" aria-label="${l}">${l}</button>`;
   const op = t.type === 'prod' ? K('·', '·', 'fn') : K('−', '−', 'fn'), sep = t.type === 'prod' ? K('²', 'x²', 'fn') : K(',', ',', 'fn'), nx = multi ? K('next', t.type === 'frac' ? '⇅' : '⇥', 'fn') : '';
   // mit Zeichnung: flache Tastatur in 2 Reihen, damit die Zeichnung sichtbar bleibt
-  if (t.visual) return `<div class="keypad kp2" data-kp>${['1', '2', '3', '4', '5'].map(x => K(x)).join('')}${sep}${K('del', '⌫', 'fn')}${['6', '7', '8', '9', '0'].map(x => K(x)).join('')}${op}${nx || K(' ', '␣', 'fn')}</div>`;
-  return `<div class="keypad" data-kp>${['1', '2', '3'].map(x => K(x)).join('')}${K('del', '⌫', 'fn')}${['4', '5', '6'].map(x => K(x)).join('')}${op}${['7', '8', '9'].map(x => K(x)).join('')}${sep}${K('0', '0', multi ? 'w3' : 'w4')}${nx}</div>`;
+  if (t.visual) return `<div class="keypad kp2" data-kp>${['1', '2', '3', '4', '5'].map(x => K(x)).join('')}${sep}${K('del', '⌫', 'fn del')}${['6', '7', '8', '9', '0'].map(x => K(x)).join('')}${op}${nx || K(' ', '␣', 'fn')}</div>`;
+  return `<div class="keypad" data-kp>${['1', '2', '3'].map(x => K(x)).join('')}${K('del', '⌫', 'fn del')}${['4', '5', '6'].map(x => K(x)).join('')}${op}${['7', '8', '9'].map(x => K(x)).join('')}${sep}${K('0', '0', multi ? 'w3' : 'w4')}${nx}</div>`;
 }
 function makeTask(topicId, level) { const T0 = TOPIC[topicId], t = level === 4 && T0.gen4 ? T0.gen4() : T0.gen(Math.min(level, 3)); t.topic = topicId; t.level = level === 4 && T0.gen4 ? 4 : Math.min(level, 3); return t; }
 
