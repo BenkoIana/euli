@@ -2810,9 +2810,278 @@ gen4('koordinaten', [
 ]);
 </script>
 <script>
+/* ===== Nach der 1. Schularbeit (13.11.2026: 28/48, Genügend) – Anpassungen vom 18.11.2026 =====
+   Punkte verloren bei: Teilermengen unvollständig, ggT/kgV großer Zahlen (zu langsam mit Teilerlisten),
+   −65 + 91 (Beträge addiert), ☐ − 52 = −93, Zahlengerade mit Schrittweite 3, Nebenwinkel 180 − 122,
+   Punkte auf den Achsen, Winkel im Dreieck (∢YXZ → Scheitel X), „20 Tage“ statt Wochen, „0 ist positiv“.
+   Aktuell in der Schule: H3 Symmetrie – 3.2 Streckensymmetrale (S. 189). 2. Schularbeit: 11.01.2027. */
+
+/* ---------- Bausteine ---------- */
+
+// Zahlengerade wie bei der Schularbeit: viele Striche, aber nur ZWEI beschriftet → Schrittweite selbst herausfinden
+function svgNumLineSparse({ start, step, n = 20, labels = [], marks = [] }) {
+  const W = 600, pad = 26, ly = 62, u = (W - 2 * pad) / n, X = i => pad + i * u;
+  let g = `<line x1="${pad - 12}" y1="${ly}" x2="${W - pad + 14}" y2="${ly}" stroke="#2b2340" stroke-width="2.5"/><polygon points="${W - pad + 18},${ly} ${W - pad + 8},${ly - 5} ${W - pad + 8},${ly + 5}"/>`;
+  for (let i = 0; i <= n; i++) {
+    const lab = labels.includes(i);
+    g += `<line x1="${X(i)}" y1="${ly - (lab ? 13 : 9)}" x2="${X(i)}" y2="${ly + (lab ? 13 : 9)}" stroke="#2b2340" stroke-width="${lab ? 3 : 2}"/>`;
+    if (lab) g += `<text x="${X(i)}" y="${ly + 38}" text-anchor="middle" font-size="22" font-weight="800" fill="#2b2340">${sg(start + i * step)}</text>`;
+  }
+  marks.forEach(m => g += `<line x1="${X(m.i) - 8}" y1="${ly - 8}" x2="${X(m.i) + 8}" y2="${ly + 8}" stroke="#e5484d" stroke-width="3.5"/><line x1="${X(m.i) - 8}" y1="${ly + 8}" x2="${X(m.i) + 8}" y2="${ly - 8}" stroke="#e5484d" stroke-width="3.5"/><text x="${X(m.i)}" y="${ly - 20}" text-anchor="middle" font-size="22" font-weight="900" fill="#e5484d">${m.label}</text>`);
+  return `<svg width="${W}" height="104" viewBox="0 0 ${W} 104" style="max-width:100%">${g}</svg>`;
+}
+function numLineTask() {
+  const step = pick([2, 3, 3, 4, 5, 10, 25]), k = pick([4, 4, 5, 3, 2]), n = 20;
+  const start = -step * rnd(7, 13), i1 = rnd(1, n - k - 6), i2 = i1 + k;
+  let im; do { im = rnd(0, n); } while (im === i1 || im === i2);
+  const L1 = start + i1 * step, L2 = start + i2 * step, ans = start + im * step;
+  const near = Math.abs(im - i1) <= Math.abs(im - i2) ? [i1, L1] : [i2, L2], d = im - near[0];
+  return T({ q: `Welche Zahl ist beim Kreuz <b>A</b> markiert?<br><span class="small muted">Achtung: Nicht jeder Strich ist beschriftet!</span>`, visual: svgNumLineSparse({ start, step, n, labels: [i1, i2], marks: [{ i: im, label: 'A' }] }), answer: ans,
+    hints: [`Zähle die Abstände zwischen ${sg(L1)} und ${sg(L2)}: Es sind ${k}. Wie viel ist dann EIN Abstand?`, `(${sg(L2)} − (${sg(L1)})) : ${k} = ${L2 - L1} : ${k} = ${step}. Ein Strich ist ${step} wert!`],
+    steps: [`Von ${sg(L1)} bis ${sg(L2)} sind es ${L2 - L1}, verteilt auf ${k} Abstände`, `→ 1 Strich = ${L2 - L1} : ${k} = <b>${step}</b>`, `Von ${sg(near[1])} aus ${Math.abs(d)} ${Math.abs(d) === 1 ? 'Strich' : 'Striche'} nach ${d < 0 ? 'links' : 'rechts'}: ${sg(near[1])} ${d < 0 ? '−' : '+'} ${Math.abs(d)} · ${step} = <b>${sg(ans)}</b>`],
+    traps: [{ v: near[1] + d, msg: `Du hast in Einerschritten gezählt. Hier ist ein Strich aber ${step} wert, nicht 1!` }] });
+}
+
+// Dreieck mit benannten Eckpunkten (wie Schularbeit Nr. 15)
+const TRI_NAMES = [['X', 'Y', 'Z'], ['A', 'B', 'C'], ['K', 'L', 'M'], ['P', 'Q', 'R'], ['D', 'E', 'F'], ['R', 'S', 'T']];
+function svgNamedTri(P, names, arcAt = -1) {
+  const c = [P[0][0] + P[1][0] + P[2][0], P[0][1] + P[1][1] + P[2][1]].map(v => v / 3);
+  let g = `<polygon points="${P.map(p => p.join(',')).join(' ')}" fill="#7c4dff" fill-opacity=".08" stroke="#2b2340" stroke-width="3"/>`;
+  P.forEach((p, i) => {
+    const dx = p[0] - c[0], dy = p[1] - c[1], l = Math.hypot(dx, dy) || 1;
+    g += `<circle cx="${p[0]}" cy="${p[1]}" r="4.5"/><text x="${p[0] + dx / l * 22}" y="${p[1] + dy / l * 22 + 7}" text-anchor="middle" font-size="21" font-weight="900">${names[i]}</text>`;
+  });
+  if (arcAt >= 0) {
+    const S = P[arcAt], A = P[(arcAt + 1) % 3], B = P[(arcAt + 2) % 3], r = 30;
+    const a1 = Math.atan2(A[1] - S[1], A[0] - S[0]), a2 = Math.atan2(B[1] - S[1], B[0] - S[0]);
+    let d = a2 - a1; while (d <= -Math.PI) d += 2 * Math.PI; while (d > Math.PI) d -= 2 * Math.PI;
+    const p1 = [S[0] + r * Math.cos(a1), S[1] + r * Math.sin(a1)], p2 = [S[0] + r * Math.cos(a2), S[1] + r * Math.sin(a2)];
+    g += `<path d="M${p1[0]},${p1[1]} A${r},${r} 0 0 ${d > 0 ? 1 : 0} ${p2[0]},${p2[1]}" fill="none" stroke="#e5484d" stroke-width="3.5"/>`;
+  }
+  return `<svg width="340" height="250" viewBox="0 0 340 250" style="max-width:100%">${g}</svg>`;
+}
+function randTri() {
+  for (; ;) {
+    const P = [[rnd(40, 120), rnd(150, 210)], [rnd(210, 300), rnd(140, 215)], [rnd(110, 230), rnd(35, 90)]];
+    const ang = i => { const S = P[i], A = P[(i + 1) % 3], B = P[(i + 2) % 3], v = [A[0] - S[0], A[1] - S[1]], w = [B[0] - S[0], B[1] - S[1]]; return Math.acos((v[0] * w[0] + v[1] * w[1]) / Math.hypot(...v) / Math.hypot(...w)) * 180 / Math.PI; };
+    if ([0, 1, 2].every(i => ang(i) > 28)) return shuffle(P);
+  }
+}
+function triVertexTask() {
+  const N = pick(TRI_NAMES), P = randTri(), v = rnd(0, 3 - 1), o = [0, 1, 2].filter(i => i !== v), [a, b] = shuffle(o), name = `∢${N[a]}${N[v]}${N[b]}`;
+  if (Math.random() < 0.55) return CHOICE(`Du sollst den Winkel <b>${name}</b> in das Dreieck einzeichnen. Bei welchem <b>Eckpunkt</b> zeichnest du den Bogen?`, [...N], N[v],
+    ['Bei drei Buchstaben ist der Scheitel immer der MITTLERE Buchstabe.', `In ${name} steht in der Mitte: ${N[v]}`], [`${name}: der mittlere Buchstabe ist <b>${N[v]}</b>`, `Der Bogen kommt also in die Ecke <b>${N[v]}</b> – zwischen den Seiten ${N[v]}${N[a]} und ${N[v]}${N[b]}`],
+    { visual: svgNamedTri(P, N), traps: [{ v: N[a], msg: `Nicht den ersten Buchstaben nehmen! Der Scheitel steht in der MITTE: ${name}.` }, { v: N[b], msg: `Nicht den letzten Buchstaben nehmen! Der Scheitel steht in der MITTE: ${name}.` }] });
+  const right = `∢${N[a]}${N[v]}${N[b]}`, opts = [...new Set([right, `∢${N[v]}${N[a]}${N[b]}`, `∢${N[a]}${N[b]}${N[v]}`])];
+  return CHOICE('Wie heißt der <b>rot</b> eingezeichnete Winkel?', shuffle(opts), right, ['Bei welchem Eckpunkt ist der Bogen? Das ist der Scheitel.', 'Der Scheitel kommt in die MITTE der drei Buchstaben.'],
+    [`Der Bogen ist bei <b>${N[v]}</b> → ${N[v]} kommt in die Mitte`, `→ <b>${right}</b> (oder ∢${N[b]}${N[v]}${N[a]})`], { visual: svgNamedTri(P, N, v) });
+}
+
+// Verschiedene Vorzeichen: −a + b (Schularbeit Nr. 9 a, d)
+function mixedSignTask(negResult) {
+  let a, b; do { a = rnd(15, 160); b = rnd(10, 200); } while (a === b || (negResult ? b >= a : b <= a) || Math.abs(a - b) < 6);
+  const r = b - a, big = Math.max(a, b), small = Math.min(a, b);
+  return T({ q: `Berechne: &nbsp; <b>−${a} + ${b} = ?</b>`, answer: r,
+    hints: ['Die beiden Zahlen haben VERSCHIEDENE Vorzeichen (− und +). Dann wird nicht zusammengezählt!', `Rechne ${big} − ${small} = ${big - small}. Wer ist „stärker“: die ${a} Minus-Schritte oder die ${b} Plus-Schritte?`],
+    steps: [`Verschiedene Vorzeichen → die größere Zahl minus die kleinere: ${big} − ${small} = ${big - small}`, `${big === a ? `Der Minus-Teil (${a}) ist größer → das Ergebnis ist <b>negativ</b>` : `Der Plus-Teil (${b}) ist größer → das Ergebnis ist <b>positiv</b>`}`, `−${a} + ${b} = <b>${sg(r)}</b>`],
+    traps: [{ v: a + b, msg: `Du hast zusammengezählt. Bei −${a} + ${b} haben die Zahlen verschiedene Vorzeichen → ABZIEHEN: ${big} − ${small}.` }, { v: -(a + b), msg: 'Nur bei GLEICHEN Vorzeichen wird zusammengezählt. Hier: abziehen!' }, { v: -r, msg: 'Die Zahl stimmt, aber das Vorzeichen nicht. Welcher Teil ist größer – der Minus-Teil oder der Plus-Teil?' }] });
+}
+// ☐ − b = r mit negativem Ergebnis (Schularbeit Nr. 11 c)
+function backwardsTask() {
+  if (Math.random() < 0.7) {
+    const b = rnd(20, 75), r = -(b + rnd(8, 60)), x = r + b;
+    return T({ q: `Ergänze die fehlende Zahl: &nbsp; <b>☐ − ${b} = ${sg(r)}</b>`, answer: x,
+      hints: [`Rückwärts rechnen: ☐ = ${sg(r)} + ${b}`, `${sg(r)} + ${b}: verschiedene Vorzeichen → ${-r} − ${b} = ${-r - b}, und Minus ist größer → negativ.`],
+      steps: [`☐ = ${sg(r)} + ${b}`, `${-r} − ${b} = ${-r - b}, der Minus-Teil ist größer → ☐ = <b>${sg(x)}</b>`, `Probe: ${sg(x)} − ${b} = ${sg(r)} ✔`],
+      traps: [{ v: -r + b, msg: `Rückwärts: ☐ = ${sg(r)} + ${b}. Das Ergebnis ist negativ – mach die Probe: ${-r + b} − ${b} = ${-r}, nicht ${sg(r)}!` }, { v: r - b, msg: `Rückwärts rechnen heißt: aus „− ${b}“ wird „+ ${b}“.` }, { v: -x, msg: `Das Vorzeichen stimmt nicht. Probe: ${-x} − ${b} = ${-x - b}.` }] });
+  }
+  const b = rnd(20, 75), r = -rnd(5, 60), x = r - b;
+  return T({ q: `Ergänze die fehlende Zahl: &nbsp; <b>☐ + ${b} = ${sg(r)}</b>`, answer: x,
+    hints: [`Rückwärts rechnen: ☐ = ${sg(r)} − ${b}`, `Von ${sg(r)} noch ${b} nach links.`], steps: [`☐ = ${sg(r)} − ${b} = <b>${sg(x)}</b>`, `Probe: ${sg(x)} + ${b} = ${sg(r)} ✔`],
+    traps: [{ v: r + b, msg: `Rückwärts rechnen heißt: aus „+ ${b}“ wird „− ${b}“.` }, { v: -x, msg: 'Das Vorzeichen stimmt nicht – mach die Probe!' }] });
+}
+// Aussagen über ganze Zahlen (Schularbeit Nr. 8)
+function statementTask() {
+  const a = rnd(6, 20), b = rnd(1, a - 1);
+  const TRUE = [['Es gibt eine kleinste positive ganze Zahl.', 'Richtig: die 1. (0 ist nicht positiv!)'], ['Es gibt eine größte negative ganze Zahl.', 'Richtig: die −1.'], ['Die Zahl 0 ist weder positiv noch negativ.', 'Richtig: 0 liegt genau in der Mitte.'],
+    ['Jede negative ganze Zahl ist kleiner als 0.', 'Richtig: Negative Zahlen liegen links von 0.'], [`Die Zahl −${a} ist kleiner als die Zahl −${b}.`, `Richtig: −${a} liegt weiter links.`], [`−${a} liegt auf der Zahlengeraden links von −${b}.`, `Richtig: −${a} ist kleiner.`], ['Es gibt keine größte ganze Zahl.', 'Richtig: Man kann immer noch 1 dazuzählen.']];
+  const FALSE = ['Die Zahl 0 ist eine positive ganze Zahl.', 'Jede negative ganze Zahl ist größer als 0.', `Die Zahl −${a} ist größer als die Zahl −${b}.`, `−${a} liegt auf der Zahlengeraden rechts von −${b}.`, 'Es gibt eine kleinste ganze Zahl.', 'Es gibt eine kleinste negative ganze Zahl.', 'Es gibt eine größte positive ganze Zahl.'];
+  const [t, why] = pick(TRUE), fs = shuffle(FALSE.filter(f => !(t.includes(`−${a}`) && f.includes(`−${a}`)))).slice(0, 4);
+  if (!fs.includes(FALSE[0]) && Math.random() < 0.7) fs[0] = FALSE[0];
+  return CHOICE('Kreuze die <b>richtige</b> Aussage an! (Genau eine stimmt.)', shuffle([t, ...fs]), t, ['Lies jede Aussage genau und denk an die Zahlengerade.', 'Die 0 ist weder positiv noch negativ. Kleiner = weiter links.'], [why, 'Merke: <b>0 ist weder positiv noch negativ.</b> Die kleinste positive ganze Zahl ist 1.'],
+    { traps: [{ v: FALSE[0], msg: '0 ist NICHT positiv – sie ist weder positiv noch negativ. Positiv sind 1, 2, 3, …' }, { v: FALSE[2], msg: `Bei negativen Zahlen: Je größer die Zahl nach dem Minus, desto KLEINER ist sie. −${a} liegt links von −${b}.` }, { v: FALSE[3], msg: `−${a} liegt LINKS von −${b} (es ist kälter, weiter weg von 0).` }] });
+}
+// ggT / kgV großer Zahlen – schnell mit Primfaktoren (Schularbeit Nr. 2)
+const BIG_PAIRS = [[48, 72], [36, 60], [54, 90], [60, 84], [72, 108], [40, 56], [45, 75], [42, 70], [64, 96], [84, 126], [56, 84], [60, 90], [48, 80], [72, 96]];
+function bigGgtKgvTask(ask) {
+  const [a, b] = pick(BIG_PAIRS), g = gcd(a, b), k = lcm(a, b), fa = primeFactors(a), fb = primeFactors(b), fg = primeFactors(g), fk = primeFactors(k);
+  return T({ q: `Bestimme ${ask === 'ggT' ? 'den' : 'das'} <b>${ask}(${a}, ${b})</b>.<br><span class="small muted">Schnellster Weg: Primfaktorzerlegung</span>`, answer: ask === 'ggT' ? g : k,
+    hints: [`${a} = ${fa.join(' · ')} &nbsp;und&nbsp; ${b} = ${fb.join(' · ')}`, ask === 'ggT' ? 'ggT: Unterstreiche die Faktoren, die in BEIDEN Zerlegungen vorkommen, und multipliziere sie.' : 'kgV: Nimm jeden Faktor so oft, wie er HÖCHSTENS in einer der Zerlegungen vorkommt.'],
+    steps: [`${a} = ${fa.join(' · ')}`, `${b} = ${fb.join(' · ')}`, ask === 'ggT' ? `gemeinsam: ${fg.join(' · ')} = <b>${g}</b>` : `kgV = ${fk.join(' · ')} = <b>${k}</b>`, `Kontrolle: ${ask === 'ggT' ? `${a} : ${g} = ${a / g} und ${b} : ${g} = ${b / g} ✔` : `${k} : ${a} = ${k / a} und ${k} : ${b} = ${k / b} ✔`}`],
+    traps: [{ v: ask === 'ggT' ? k : g, msg: ask === 'ggT' ? 'Das ist das kgV! Der ggT ist ein TEILER – er ist kleiner als beide Zahlen.' : 'Das ist der ggT! Das kgV ist ein VIELFACHES – es ist größer als beide Zahlen.' }, { v: a * b, msg: `${a} · ${b} ist ein gemeinsames Vielfaches – aber nicht das kleinste!` }] });
+}
+// kgV-Textaufgabe: richtige Zahl UND richtige Einheit im Antwortsatz (Schularbeit Nr. 5)
+function lcmSentenceTask() {
+  const S2 = [
+    { intro: 'Ella bekommt Newsletter per E-Mail', who: ['von der Gemeinde', 'vom Kletterverein', 'vom Wanderverein'], all: 'Wochen', other: 'Tage', now: 'In dieser Woche hat sie alle drei bekommen.', end: 'sie wieder alle drei in derselben Woche bekommt' },
+    { intro: 'Ella hat drei Kurse', who: ['Schwimmen', 'Klavier', 'Malen'], all: 'Tage', other: 'Wochen', now: 'Heute hatte sie alle drei Kurse.', end: 'sie wieder alle drei Kurse am selben Tag hat' },
+    { intro: 'Ella bekommt drei Zeitschriften', who: ['ein Comic-Heft', 'ein Tier-Magazin', 'ein Rätselheft'], all: 'Monate', other: 'Wochen', now: 'Diesen Monat sind alle drei gekommen.', end: 'wieder alle drei im selben Monat kommen' }];
+  const s = pick(S2), T3 = pick([[4, 2, 5], [3, 4, 6], [2, 3, 5], [4, 6, 8], [3, 5, 6], [2, 5, 6], [3, 4, 8]]), k = T3.reduce(lcm), prod = T3.reduce((x, y) => x * y);
+  const sent = (n, u) => `Es dauert ${n} ${u}.`, right = sent(k, s.all);
+  const opts = [...new Set([right, sent(k, s.other), sent(prod !== k ? prod : k * 2, s.all), sent(Math.max(...T3), s.all)])];
+  return CHOICE(`${s.intro}: ${s.who.map((w, i) => `${w} alle <b>${T3[i]} ${s.all}</b>`).join(', ')}. ${s.now}<br>Wie lange dauert es, bis ${s.end}? Welcher <b>Antwortsatz</b> ist richtig?`, shuffle(opts), right,
+    ['„Wann wieder gleichzeitig?“ → kgV.', `kgV(${T3.join(', ')}) = ? – und schau, in welcher EINHEIT die Angaben sind!`],
+    [`kgV(${T3.join(', ')}) = ${k}`, `Die Angaben sind in <b>${s.all}</b> → die Antwort auch: <b>${right}</b>`],
+    { traps: [{ v: opts[1], msg: `Die Zahl stimmt – aber die Einheit nicht! In der Angabe steht „${s.all}“, also auch im Antwortsatz.` }, { v: opts[2], msg: 'Alle Zahlen multiplizieren gibt ein gemeinsames Vielfaches – aber nicht das KLEINSTE.' }] });
+}
+// Nebenwinkel mit „schiefen“ Zahlen (Schularbeit Nr. 13 b)
+function neighbourTask() {
+  const b = pick([rnd(101, 169), rnd(11, 79)]), ask = Math.random() < 0.75 ? 'neben' : 'scheitel';
+  if (ask === 'scheitel') return T({ q: `Zwei Geraden schneiden einander. Der Winkel β beträgt <b>${b}°</b>. Wie groß ist der <b>Scheitelwinkel</b> zu β?`, visual: svgCross(b, 'γ', 'scheitel'), answer: b, unit: '°', hints: ['Scheitelwinkel liegen gegenüber.', 'Scheitelwinkel sind gleich groß!'], steps: [`Scheitelwinkel sind gleich groß → <b>${b}°</b>`], traps: [{ v: 180 - b, msg: 'Das wäre der Nebenwinkel. Scheitelwinkel sind gleich groß.' }] });
+  return T({ q: `Zwei Geraden schneiden einander. Der Winkel β beträgt <b>${b}°</b>. Wie groß ist ein <b>Nebenwinkel</b> zu β?`, visual: svgCross(b, 'α', 'neben'), answer: 180 - b, unit: '°',
+    hints: ['Nebenwinkel ergeben zusammen 180°.', `180° − ${b}° = ? &nbsp;Mach am Ende die Probe: Ergebnis + ${b}° muss 180° sein.`],
+    steps: [`180° − ${b}° = <b>${180 - b}°</b>`, `Probe: ${180 - b}° + ${b}° = 180° ✔`],
+    traps: [{ v: b, msg: 'Das ist der Scheitelwinkel. Nebenwinkel ergänzen einander auf 180°.' }, { v: 360 - b, msg: 'Nebenwinkel ergeben 180°, nicht 360°.' }, { v: 280 - b, msg: `Rechenfehler! Mach die Probe: ${280 - b}° + ${b}° = ${280}°, nicht 180°.` }] });
+}
+// Punkte auf den Achsen (Schularbeit Nr. 14)
+function axisTask() {
+  const O = ['auf der x-Achse', 'auf der y-Achse', 'im 1. Quadranten', 'im 2. Quadranten', 'im 3. Quadranten', 'im 4. Quadranten'], v = () => rnd(1, 12);
+  const k = Math.random() < 0.7 ? rnd(0, 1) : rnd(2, 5), P = [[v() * pick([1, -1]), 0], [0, v() * pick([1, -1])], [v(), v()], [-v(), v()], [-v(), -v()], [v(), -v()]][k], lab = pick(['U', 'V', 'W', 'X', 'P', 'Q']);
+  return CHOICE(`Wo liegt der Punkt <b>${lab} = ${pt(...P)}</b>?`, O, O[k], ['Ist eine Koordinate 0? Dann liegt der Punkt auf einer ACHSE!', 'x = 0 → kein Schritt nach links/rechts → der Punkt liegt auf der <b>y</b>-Achse. y = 0 → auf der <b>x</b>-Achse.'],
+    [k < 2 ? `${k === 0 ? 'y' : 'x'} = 0 → <b>${O[k]}</b>` : `x ${P[0] < 0 ? 'negativ' : 'positiv'}, y ${P[1] < 0 ? 'negativ' : 'positiv'} → <b>${O[k]}</b>`],
+    { traps: [{ v: k === 0 ? O[1] : k === 1 ? O[0] : '', msg: k === 1 ? `Verwechselt! Bei ${pt(...P)} ist x = 0: Du gehst gar nicht nach rechts oder links, nur ${P[1] > 0 ? 'hinauf' : 'hinunter'} – also bist du auf der y-Achse.` : `Verwechselt! Bei ${pt(...P)} ist y = 0: Du gehst nur nach ${P[0] > 0 ? 'rechts' : 'links'}, nicht hinauf – also bleibst du auf der x-Achse.` }, ...(k < 2 ? [2, 3, 4, 5].map(q => ({ v: O[q], msg: 'Eine Koordinate ist 0 – dann liegt der Punkt in KEINEM Quadranten, sondern auf einer Achse!' })) : [])] });
+}
+
+/* ---------- Schularbeit verbessern: jede verlorene Aufgabe neu, bis sie 3-mal hintereinander sitzt ---------- */
+const VERB = [
+  { k: 'teiler', nr: 1, topic: 'teilbar', name: 'Alle Teiler finden (T₈₀)', f: () => teilermengeTask(pick([80, 72, 60, 84, 90, 96, 100, 64, 70, 56, 66, 78])) },
+  { k: 'ggt', nr: 2, topic: 'ggtkgv', name: 'ggT großer Zahlen (48 und 72)', f: () => bigGgtKgvTask('ggT') },
+  { k: 'kgv', nr: 2, topic: 'ggtkgv', name: 'kgV großer Zahlen (48 und 72)', f: () => bigGgtKgvTask('kgV') },
+  { k: 'einheit', nr: 5, topic: 'ggtkgv', name: 'Antwortsatz mit der richtigen Einheit', f: lcmSentenceTask },
+  { k: 'aussage', nr: 8, topic: 'ganz', name: 'Richtige Aussage über ganze Zahlen', f: statementTask },
+  { k: 'vorzP', nr: 9, topic: 'ganzrech', name: '−65 + 91 (verschiedene Vorzeichen)', f: () => mixedSignTask(false) },
+  { k: 'vorzN', nr: 9, topic: 'ganzrech', name: '−123 + 16 (verschiedene Vorzeichen)', f: () => mixedSignTask(true) },
+  { k: 'zgerade', nr: 10, topic: 'ganz', name: 'Zahlengerade: Schrittweite erkennen', f: numLineTask },
+  { k: 'ergaenz', nr: 11, topic: 'ganzrech', name: '☐ − 52 = −93 (rückwärts rechnen)', f: backwardsTask },
+  { k: 'neben', nr: 13, topic: 'parallelwinkel', name: 'Nebenwinkel (180° − 122°)', f: neighbourTask },
+  { k: 'achse', nr: 14, topic: 'koordinaten', name: 'Punkte auf den Achsen', f: axisTask },
+  { k: 'dreieck', nr: 15, topic: 'winkel', name: 'Winkel im Dreieck (∢YXZ)', f: triVertexTask },
+];
+const VERB_NEED = 3;  // so oft hintereinander beim 1. Versuch ohne Tipp richtig
+const verbTask = v => { const t = v.f(); t.topic = v.topic; t.level = 4; t.verb = v.k; return t; };
+
+/* ---------- Neue Aufgaben auch im normalen Üben und im Schularbeits-Niveau ---------- */
+{
+  const t = TOPIC.ganzrech, old = t.gen;
+  t.lesson.push({ h: 'Verschiedene Vorzeichen: abziehen, nicht zusammenzählen!', html: `<div class="story">⚔️ Stell dir ein Tauziehen vor: <b>−65 + 91</b> heißt: 65 Kinder ziehen nach links (Minus), 91 Kinder nach rechts (Plus). Wer gewinnt – und um wie viel?</div>
+    <div class="merke"><b>Gleiche Vorzeichen</b> (−31 − 165): zusammenzählen, das Vorzeichen bleibt → −196<br><b>Verschiedene Vorzeichen</b> (−65 + 91): die größere Zahl minus die kleinere → 91 − 65 = 26.<br>Das Vorzeichen bekommt der „Stärkere“: 91 Plus gewinnt → <b>+26</b><br>−123 + 16: 123 − 16 = 107, Minus ist stärker → <b>−107</b></div>
+    <div class="oops">−65 + 91 = 156 ✘ – da wurde zusammengezählt, obwohl die Vorzeichen verschieden sind!</div>
+    <div class="merke"><b>Rückwärts rechnen:</b> ☐ − 52 = −93 → ☐ = −93 + 52 = <b>−41</b>. Probe: −41 − 52 = −93 ✔</div>` });
+  t.gen = L => {
+    const r = Math.random();
+    if (L >= 2 && r < 0.3) return mixedSignTask(Math.random() < 0.5);
+    if (L === 3 && r < 0.45) return backwardsTask();
+    return old(L);
+  };
+  gen4('ganzrech', [() => mixedSignTask(Math.random() < 0.5), backwardsTask]);
+}
+{
+  const t = TOPIC.ganz, old = t.gen;
+  t.lesson.push({ h: 'Zahlengerade: Wie viel ist ein Strich?', html: `<p>Oft sind nur <b>zwei</b> Striche beschriftet. Dann musst du zuerst herausfinden, wie viel ein Strich wert ist:</p>
+    ${svgNumLineSparse({ start: -48, step: 3, n: 20, labels: [4, 8], marks: [{ i: 12, label: 'A' }] })}
+    <div class="merke">Von −36 bis −24 sind es 12 – verteilt auf <b>4 Abstände</b>.<br>12 : 4 = 3 → <b>ein Strich ist 3 wert!</b><br>A liegt 4 Striche rechts von −24: −24 + 4 · 3 = <b>−12</b></div>
+    <div class="oops">Einfach in Einerschritten weiterzählen (A = −20) – das stimmt nur, wenn ein Strich 1 ist!</div>
+    <div class="merke"><b>0 ist weder positiv noch negativ.</b> Die kleinste positive ganze Zahl ist 1, die größte negative ist −1.</div>` });
+  t.gen = L => {
+    const r = Math.random();
+    if (L >= 2 && r < 0.25) return numLineTask();
+    if (L >= 2 && r < 0.4) return statementTask();
+    return old(L);
+  };
+  gen4('ganz', [numLineTask, numLineTask, statementTask]);
+}
+{
+  const t = TOPIC.winkel, old = t.gen;
+  t.lesson.push({ h: 'Winkel im Dreieck benennen', html: `<div class="row" style="justify-content:center">${svgNamedTri([[60, 200], [290, 180], [150, 50]], ['Y', 'Z', 'X'], 2)}</div>
+    <div class="merke"><b>∢YXZ</b>: Der <b>mittlere</b> Buchstabe ist der Scheitel → der Bogen kommt in die Ecke <b>X</b>.<br>∢ZYX → Ecke <b>Y</b> &nbsp;·&nbsp; ∢XZY → Ecke <b>Z</b></div>
+    <div class="oops">Den ersten Buchstaben nehmen (∢YXZ bei Y einzeichnen) – falsch! Immer auf die MITTE schauen.</div>
+    <p>✏️ Beim Messen mit dem Geodreieck: Die Mitte des Geodreiecks genau auf den Scheitel, die Null-Linie auf einen Schenkel legen.</p>` });
+  t.gen = L => (L >= 2 && Math.random() < 0.25 ? triVertexTask() : old(L));
+  gen4('winkel', [triVertexTask, triVertexTask]);
+}
+{
+  const t = TOPIC.parallelwinkel, old = t.gen;
+  t.gen = L => (L >= 2 && Math.random() < 0.3 ? neighbourTask() : old(L));
+  gen4('parallelwinkel', [neighbourTask]);
+}
+{
+  const t = TOPIC.koordinaten, old = t.gen;
+  t.lesson[2].html += `<div class="oops">(0|9) liegt <b>nicht</b> auf der x-Achse! x = 0 heißt: kein Schritt nach rechts oder links – du gehst nur hinauf → <b>y-Achse</b>.<br>(−6|0): y = 0 → kein Schritt hinauf → <b>x-Achse</b> (in keinem Quadranten).</div>`;
+  t.gen = L => (L >= 2 && Math.random() < 0.25 ? axisTask() : old(L));
+  gen4('koordinaten', [axisTask]);
+}
+{
+  const t = TOPIC.ggtkgv, old = t.gen;
+  t.lesson.push({ h: 'Große Zahlen? Primfaktoren sind schneller!', html: `<p>Bei großen Zahlen dauern Teilerlisten zu lange – bei der Schularbeit fehlt dann die Zeit. Schneller geht es so:</p>
+    <div class="merke">48 = <u>2 · 2 · 2</u> · 2 · <u>3</u><br>72 = <u>2 · 2 · 2</u> · <u>3</u> · 3<br><b>ggT</b> = was in BEIDEN vorkommt: 2 · 2 · 2 · 3 = <b>24</b><br><b>kgV</b> = jeder Faktor so oft wie höchstens: 2 · 2 · 2 · 2 · 3 · 3 = <b>144</b></div>
+    <div class="merke">Kontrolle: ggT · kgV = 48 · 72 → 24 · 144 = 3 456 ✔</div>
+    <div class="oops">Im Antwortsatz die <b>Einheit aus der Angabe</b> verwenden: Newsletter alle 4 <b>Wochen</b> → „nach 20 <b>Wochen</b>“, nicht „20 Tage“.</div>` });
+  t.gen = L => {
+    const r = Math.random();
+    if (L === 3 && r < 0.3) return bigGgtKgvTask(pick(['ggT', 'kgV']));
+    if (L >= 2 && r < 0.45) return lcmSentenceTask();
+    return old(L);
+  };
+  gen4('ggtkgv', [() => bigGgtKgvTask('ggT'), () => bigGgtKgvTask('kgV'), lcmSentenceTask]);
+}
+
+/* ---------- H3.2 Streckensymmetrale (S. 189) – aktuell in der Schule ---------- */
+function svgPerp(sym = true) {  // Strecke AB mit Kreisbögen und Streckensymmetrale wie im Buch
+  return `<svg width="300" height="220" viewBox="0 0 300 220" style="max-width:100%"><path d="M175,20 A95,95 0 0 0 175,200" fill="none" stroke="#ff9600" stroke-width="2"/><path d="M125,20 A95,95 0 0 1 125,200" fill="none" stroke="#ff9600" stroke-width="2"/>
+    <line x1="80" y1="110" x2="220" y2="110" stroke="#1c5fb8" stroke-width="3.5"/><circle cx="80" cy="110" r="5" fill="#1c5fb8"/><circle cx="220" cy="110" r="5" fill="#1c5fb8"/><text x="62" y="104" font-size="19" font-weight="900">A</text><text x="226" y="104" font-size="19" font-weight="900">B</text>
+    ${sym ? '<line x1="150" y1="10" x2="150" y2="210" stroke="#e5484d" stroke-width="2.5" stroke-dasharray="12 4 2 4"/><text x="158" y="24" font-size="16" font-weight="900" fill="#e5484d">s<tspan font-size="12" dy="4">AB</tspan></text><path d="M150,96 h14 v14" fill="none" stroke="#e5484d" stroke-width="1.8"/>' : ''}</svg>`;
+}
+{
+  const t = TOPIC.symmetrie, old = t.gen;
+  t.book = 'H3 · S. 187–196 (3.2 Streckensymmetrale S. 189)';
+  t.lesson.splice(3, 0, { h: 'Die Streckensymmetrale konstruieren (S. 189)', html: `<div class="row" style="justify-content:center">${svgPerp()}</div>
+    <div class="merke"><b>1.</b> Zeichne die Strecke AB.<br><b>2.</b> Zeichne um A und um B mit dem Zirkel je einen Kreisbogen mit dem <b>gleichen Radius</b>, sodass sich die Bögen <b>zweimal schneiden</b>.<br><b>3.</b> Verbinde die beiden Schnittpunkte <b>strichpunktiert</b> und beschrifte: <b>s<sub>AB</sub></b></div>
+    <p>💡 Tipp aus dem Buch: Nimm als Radius etwa <b>¾ von AB</b>. Der Radius muss auf jeden Fall <b>größer als die Hälfte</b> von AB sein – sonst schneiden sich die Bögen nicht!</p>
+    <div class="merke">AB und s<sub>AB</sub> stehen <b>normal</b> aufeinander (rechter Winkel ∟), und s<sub>AB</sub> halbiert AB genau in der Mitte.<br>Jeder Punkt auf s<sub>AB</sub> ist von A und B <b>gleich weit</b> entfernt – und NUR diese Punkte.</div>` });
+  const SYM = [
+    () => { const d = rnd(11, 39) / 10, X = pick(['X₁', 'X₂', 'X₃', 'P', 'Q']);
+      return T({ q: `Der Punkt ${X} liegt auf der Streckensymmetrale s<sub>AB</sub>. Die Strecke A${X} ist <b>${fmt(d)} cm</b> lang. Wie lang ist B${X}?`, answer: d, unit: 'cm', visual: svgPerp(), hints: ['Was gilt für alle Punkte auf der Streckensymmetrale?', 'Jeder Punkt auf s<sub>AB</sub> ist von A und B GLEICH weit entfernt.'], steps: [`${X} liegt auf s<sub>AB</sub> → gleich weit von A und B`, `B${X} = A${X} = <b>${fmt(d)} cm</b>`] }); },
+    () => { const a = rnd(15, 45) / 10, same = Math.random() < 0.5, b = same ? a : Math.round((a + pick([-0.7, -0.4, 0.3, 0.6, 0.9])) * 10) / 10;
+      return CHOICE(`Ein Punkt P ist von A <b>${fmt(a)} cm</b> und von B <b>${fmt(b)} cm</b> entfernt. Liegt P auf der Streckensymmetrale s<sub>AB</sub>?`, ['Ja', 'Nein'], same ? 'Ja' : 'Nein', ['Auf s<sub>AB</sub> liegen genau die Punkte, die von A und B gleich weit weg sind.'], [same ? 'Gleich weit von A und B → P liegt auf s<sub>AB</sub>: <b>Ja</b>' : `${fmt(a)} cm ≠ ${fmt(b)} cm → <b>Nein</b>`]); },
+    () => { const s = rnd(0, 2), S3 = ['Strecke AB zeichnen', 'um A und B Kreisbögen mit gleichem Radius zeichnen', 'die zwei Schnittpunkte strichpunktiert verbinden und mit s<sub>AB</sub> beschriften'], plain = x => x.replace(/<\/?sub>/g, '');
+      return CHOICE(`Was ist bei der Konstruktion der Streckensymmetrale der <b>${s + 1}. Schritt</b>?`, shuffle([...S3.map(plain), 'den Mittelpunkt mit dem Lineal abmessen']), plain(S3[s]), ['Zuerst braucht man die Strecke, dann den Zirkel, dann das Lineal.'], S3.map((x, i) => `${i + 1}. ${x}`)); },
+    () => { const ab = rnd(4, 9), opts = [ab * 0.25, ab * 0.4, ab * 0.75, ab * 1.5].map(x => Math.round(x * 10) / 10), ok = opts.filter(x => x > ab / 2);
+      return CHOICE(`Die Strecke AB ist <b>${ab} cm</b> lang. Welchen Radius soll man laut Tipp im Buch für die Kreisbögen nehmen?`, opts.map(x => fmt(x) + ' cm'), fmt(opts[2]) + ' cm', ['Der Radius muss größer als die Hälfte von AB sein – sonst schneiden sich die Bögen nicht.', `Tipp im Buch: etwa ¾ von AB. ¾ von ${ab} cm = ?`], [`Hälfte von AB = ${fmt(ab / 2)} cm – kleiner geht nicht`, `¾ von ${ab} cm ≈ <b>${fmt(opts[2])} cm</b> (am genauesten)`, `${fmt(opts[3])} cm würde auch gehen, aber die Bögen werden sehr groß`],
+        { traps: opts.filter(x => x <= ab / 2).map(x => ({ v: fmt(x) + ' cm', msg: `${fmt(x)} cm ist kleiner als die Hälfte von AB (${fmt(ab / 2)} cm) – die Kreisbögen würden sich gar nicht schneiden!` })).concat([{ v: fmt(opts[3]) + ' cm', msg: 'Das geht zwar, ist aber unpraktisch groß. Der Tipp im Buch: etwa ¾ von AB.' }]) }); },
+    () => { const hor = Math.random() < 0.5, c = rnd(-4, 4), a = rnd(-6, 0), b = a + 2 * rnd(2, 5), m = (a + b) / 2, P = hor ? [a, c] : [c, a], Q = hor ? [b, c] : [c, b];
+      if (Math.max(Math.abs(b), Math.abs(a)) > 7) return TOPIC.symmetrie.gen4();
+      return T({ type: 'point', pre: 'M =', q: `P = ${pt(...P)} und Q = ${pt(...Q)}. Die Streckensymmetrale s<sub>PQ</sub> geht durch den <b>Mittelpunkt M</b> der Strecke PQ. Gib M an.`, answer: hor ? [m, c] : [c, m], visual: svgCoord({ min: -7, max: 7, pts: [{ x: P[0], y: P[1], label: 'P' }, { x: Q[0], y: Q[1], label: 'Q' }], size: 320 }),
+        hints: [hor ? 'P und Q liegen auf gleicher Höhe – nur x ändert sich.' : 'P und Q liegen genau übereinander – nur y ändert sich.', `Genau in der Mitte zwischen ${sg(a)} und ${sg(b)} liegt ${sg(m)}.`], steps: [`Von ${sg(a)} bis ${sg(b)} sind es ${b - a} Einheiten, die Hälfte ist ${(b - a) / 2}`, `${sg(a)} + ${(b - a) / 2} = ${sg(m)} → <b>M = ${pt(...(hor ? [m, c] : [c, m]))}</b>`, `s<sub>PQ</sub> ist die ${hor ? 'senkrechte' : 'waagrechte'} Gerade durch M`] }); },
+    () => { const cm = rnd(21, 89) / 10, toMm = Math.random() < 0.5;
+      return toMm ? T({ q: `Im Heft hast du gemessen: AB = <b>${fmt(cm)} cm</b>. Wie viele <b>Millimeter</b> sind das?`, answer: Math.round(cm * 10), unit: 'mm', hints: ['1 cm = 10 mm'], steps: [`${fmt(cm)} · 10 = <b>${Math.round(cm * 10)} mm</b>`], traps: [{ v: Math.round(cm * 100), msg: '1 cm = 10 mm, nicht 100.' }] })
+        : T({ q: `CD = <b>${Math.round(cm * 10)} mm</b>. Wie viele <b>cm</b> sind das?`, answer: cm, unit: 'cm', hints: ['10 mm = 1 cm → durch 10 teilen.'], steps: [`${Math.round(cm * 10)} : 10 = <b>${fmt(cm)} cm</b>`] }); },
+  ];
+  t.gen = L => (Math.random() < (L === 1 ? 0.35 : 0.55) ? pick(SYM)() : old(L));
+  gen4('symmetrie', SYM);
+}
+
+/* ---------- Schulstand & 2. Schularbeit ---------- */
+// Stoff der 2. Schularbeit ist noch nicht bekannt → vorläufig: aktuelles Kapitel + der Stoff der 1. Schularbeit. Bitte anpassen, sobald die Lehrerin ihn bekannt gibt.
+BOOK.examDefault = { date: '2027-01-11', name: '2. Schularbeit', topics: ['symmetrie', 'teilbar', 'primzahlen', 'ggtkgv', 'ganz', 'ganzrech', 'winkel', 'parallelwinkel', 'koordinaten'] };
+BOOK.examVer = 3;
+BOOK.defaultFocus = ['symmetrie', 'ganzrech', 'ganz', 'teilbar', 'ggtkgv', 'winkel', 'koordinaten'];
+BOOK.focusVer = 4;
+BOOK.boost = { symmetrie: 1.5, ganzrech: 1.6, teilbar: 1.6, ggtkgv: 1.4, ganz: 1.4, winkel: 1.3, koordinaten: 1.2 };
+</script>
+<script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '02.11.2026 12:36';
+const APP_VER = '18.11.2026 19:10';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -2904,6 +3173,7 @@ function mergeStates(a, b) {
   m.notes = Object.assign({}, o.notes, n.notes);
   m.fixedMids = [...new Set([...(a.fixedMids || []), ...(b.fixedMids || [])])].slice(-300);
   m.mClear = Math.max(a.mClear || 0, b.mClear || 0);
+  m.verbDone = [...new Set([...(a.verbDone || []), ...(b.verbDone || [])])];
   const seen = new Set(), done = new Set(m.fixedMids);
   m.mistakes = [...a.mistakes, ...b.mistakes].filter(x => !seen.has(x.mid) && seen.add(x.mid) && !done.has(x.mid) && +String(x.mid).slice(0, 13) > m.mClear)
     .sort((x, y) => String(x.mid).localeCompare(String(y.mid))).slice(-40);
@@ -3324,9 +3594,14 @@ function keypadHTML(t) {
 }
 function makeTask(topicId, level) { const T0 = TOPIC[topicId], t = level === 4 && T0.gen4 ? T0.gen4() : T0.gen(Math.min(level, 3)); t.topic = topicId; t.level = level === 4 && T0.gen4 ? 4 : Math.min(level, 3); return t; }
 
+const RUN_NEED = 5;
 function record(t, r) {
   const s = tp(t.topic); s.seen++; if (r.ok) s.ok++; s.last = today();
   s.m = Math.max(0, Math.min(100, s.m + (r.ok ? (r.tries === 0 ? (r.hints ? 5 : 10) : 3) : -8)));
+  s.run = r.ok && !r.tries && !r.hints ? (s.run || 0) + 1 : 0;  // richtig in Folge (1. Versuch, ohne Tipp)
+  if (s.run < RUN_NEED) s.m = Math.min(s.m, 85);                // ⭐⭐⭐ (ab 90 %) erst, wenn es mehrmals hintereinander sitzt
+  if (t.verb) { S.verb = S.verb || {}; S.verb[t.verb] = r.ok && !r.tries && !r.hints ? (S.verb[t.verb] || 0) + 1 : 0;
+    if (S.verb[t.verb] >= VERB_NEED && !(S.verbDone || []).includes(t.verb)) { S.verbDone = [...(S.verbDone || []), t.verb]; setTimeout(() => toast(`🔧 Ausgebügelt: <b>${VERB.find(v => v.k === t.verb).name}</b> sitzt jetzt!`, 3500), 700); } }
   const d = dayRec(); d.n++; if (r.ok) d.ok++; if (r.ok && r.tries === 0) d.ok1++; d.sec += Math.min(r.sec, 180);
   S.total++; S.xp += r.xp;
   if (!r.ok && !t.fromMistake) {
@@ -3360,6 +3635,10 @@ function examTopicToday() {
 }
 // Was bei der Schularbeit auf Papier kommt und die App nicht abprüfen kann
 const PAPER = [
+  ['📐', '<b>Streckensymmetrale konstruieren</b> (S. 189): Strecke AB = 6 cm, Radius ≈ ¾ von AB, Schnittpunkte strichpunktiert verbinden, s<sub>AB</sub> beschriften, rechten Winkel einzeichnen', 'S. 189'],
+  ['🗺️', 'Nr. 738: Streckensymmetrale von P = (8|−2) und Q = (3|2) im Koordinatensystem konstruieren. Dann 2 Punkte auf s<sub>PQ</sub> markieren und nachmessen: gleich weit von P und Q?', 'Nr. 738'],
+  ['🔺', 'Wie Schularbeit Nr. 15: X = (−2|4), Y = (−6|−4), Z = (7|−2) eintragen, Dreieck zeichnen, α = ∢YXZ, β = ∢ZYX, γ = ∢XZY einzeichnen (<b>mittlerer Buchstabe = Ecke!</b>) und messen. Lösung: α ≈ 83°, β ≈ 55°, γ ≈ 42° – zusammen 180°', 'SA Nr. 15'],
+  ['📏', 'Wie Schularbeit Nr. 10: Zahlengerade zeichnen, nur −36 und −24 beschriften (4 Kästchen Abstand), dann −12, 15, 3 und −51 eintragen. Zuerst: Wie viel ist 1 Kästchen?', 'SA Nr. 10'],
   ['📐', 'Winkel mit dem Geodreieck <b>zeichnen</b> (z. B. 35°, 140°, 250°) und beschriften (α, ∢ABC)', 'S. 178–182'],
   ['📏', 'Winkel <b>messen</b>: 3 Winkel ins Heft zeichnen (lassen), mit dem Geodreieck messen und die Winkelart dazuschreiben', 'S. 178–182'],
   ['🗺️', 'Ein <b>Koordinatensystem zeichnen</b> und beschriften (x-Achse, y-Achse, Ursprung, Einheit 1 cm), 4 Punkte in allen Quadranten eintragen', 'S. 183–186'],
@@ -3384,7 +3663,7 @@ function examCard() {
     plan += step(d.goal, `<b>Tagestraining</b> (${S.settings.goal} gemischte Aufgaben) <button class="btn go" onclick="startDaily()">▶ Start</button>`);
     if (t) plan += step(day.done, `<b>Schwerpunkt heute: ${t.icon} ${t.title}</b> <span class="small muted">📘 ${t.book}</span><br><button class="btn" onclick="go('lesson','${t.id}')">📖 Erklärung</button> <button class="btn" onclick="startTopic('${t.id}')">✏️ 8 Aufgaben</button>`);
     if (e.days <= 12) { const pp = PAPER[e.days % PAPER.length]; plan += step(false, `<b>Heute auf Papier ✏️</b> ${pp[0]} ${pp[1]} <span class="small muted">📘 ${pp[2]}</span>`); }
-    if (e.days <= 6) plan += step(false, `<b>Probe-Schularbeit</b> – 12 Aufgaben aus dem ganzen Stoff, ohne Tipps <button class="btn" onclick="startExamTest()">📝 Start</button>`);
+    if (e.days <= 6 || [0, 6].includes(new Date().getDay())) plan += step(false, `<b>Probe-Schularbeit mit Stoppuhr ⏱️</b> – 12 Aufgaben, ohne Tipps, 24 Minuten${e.days > 6 ? ' <span class="small muted">(jedes Wochenende – fürs Tempo)</span>' : ''} <button class="btn" onclick="startExamTest()">📝 Start</button>`);
   }
   return `<div class="card" style="margin-bottom:18px;border-color:#ffe08a;box-shadow:0 4px 0 #ffe08a"><div class="row" style="align-items:center;flex-wrap:nowrap"><div class="count"><div class="stat">${e.days}</div><div class="small" style="font-weight:800;color:var(--pri)">${e.days === 1 ? 'Tag' : 'Tage'}</div></div>
     <div style="flex:1;min-width:0"><h3 style="margin:0">bis zur ${e.name}</h3><div class="small muted">${e.label} · vorbereitet: <b>${e.ready} %</b></div><div class="mbar" style="height:14px"><i style="width:${e.ready}%"></i></div></div></div>
@@ -3392,7 +3671,7 @@ function examCard() {
 }
 function startExamTest() {
   const e = examInfo(), ids = e ? e.ids : BOOK.defaultFocus;
-  go('practice', { mode: 'test', test: true, list: shuffle(Array.from({ length: 12 }, (_, i) => ({ topic: ids[i % ids.length], lvl: TOPIC[ids[i % ids.length]].gen4 ? 4 : 3 }))), i: 0, res: [] });
+  go('practice', { mode: 'test', test: true, limit: 12 * 120, list: shuffle(Array.from({ length: 12 }, (_, i) => ({ topic: ids[i % ids.length], lvl: TOPIC[ids[i % ids.length]].gen4 ? 4 : 3 }))), i: 0, res: [] });
 }
 
 /* ---------- Trainings-Planer ---------- */
@@ -3417,6 +3696,7 @@ function buildDaily() {
   const goal = S.settings.goal, list = [{ topic: 'kopf' }];
   if (goal >= 10) list.push({ topic: 'kopf' });
   shuffle(S.mistakes).slice(0, Math.min(3, Math.floor(goal / 4))).forEach(m => list.push({ topic: m.topic, task: m }));
+  shuffle(verbOpen()).slice(0, goal >= 8 ? 2 : 1).forEach(v => list.push({ topic: v.topic, verb: v.k }));
   const pool = candidateTopics(); let last = null;
   const ex = examInfo(), hard = id => ex && ex.days <= 21 && ex.ids.includes(id) && TOPIC[id].gen4 && tp(id).m >= (ex.days <= 7 ? 30 : 50) && Math.random() < (ex.days <= 7 ? 0.6 : 0.4);
   while (list.length < goal) { const id = weightedPick(pool, last); list.push(hard(id) ? { topic: id, lvl: 4 } : { topic: id }); last = id; }
@@ -3457,6 +3737,7 @@ const VIEWS = {
       <div class="cta"><div style="flex:1;min-width:210px"><h2>${d.goal ? '🌟 Bonus-Runde' : '📅 Heutiges Training'}</h2><p>${g} gemischte Aufgaben · Aufwärmen, Wiederholen & Neues · ca. ${Math.round(g * 1.5)} Minuten</p></div>
         <button class="btn big" onclick="startDaily()">${d.n ? 'Weiter üben' : "Los geht's"} ▶</button></div>
       ${examCard()}
+      ${verbCard()}
       ${newFocus.length ? `<div class="card" style="margin-bottom:18px;border-color:#84d8ff;box-shadow:0 4px 0 #b8e8ff"><div class="row" style="flex-wrap:nowrap;align-items:center"><div style="font-size:44px">${newFocus[0].icon}</div><div style="flex:1"><div class="small" style="font-weight:900;color:var(--blue-d);text-transform:uppercase;letter-spacing:.5px">🏫 Neu in der Schule</div><h3 style="margin:2px 0 4px">${newFocus[0].title}</h3><div class="muted small">Schau dir zuerst die Erklärung an – dann fällt das Üben viel leichter.</div></div></div><button class="btn blue" style="margin-top:12px" onclick="go('lesson','${newFocus[0].id}')">📖 Erklärung starten</button></div>` : ''}
       <div class="grid g2">
         <button class="card tile" onclick="startMistakes()"><div class="ic">🧰</div><h3 style="margin:0">Fehler-Kiste ${S.mistakes.length ? `<span class="badge-n">${S.mistakes.length}</span>` : ''}</h3><div class="muted small">${S.mistakes.length ? 'Knack deine alten Fehler!' : 'Leer – super!'}</div></button>
@@ -3490,7 +3771,7 @@ const VIEWS = {
     const t = TOPIC[id], s = tp(id), gi = GROUPS.findIndex(g => g.id === t.group), [uc, ud] = UNIT_COLORS[Math.max(0, gi) % UNIT_COLORS.length];
     app().innerHTML = `<button class="btn ghost" onclick="go('topics')">← Lernpfad</button>
       <div class="card" style="margin-top:16px"><div class="topic-hero"><div class="big-ic" style="background:${uc};box-shadow:0 6px 0 ${ud}">${t.icon}</div><div style="flex:1;min-width:220px"><div class="slide-meta">📘 ${t.book}</div><h1 style="margin:2px 0 4px">${t.title}</h1><div class="muted">${t.desc}</div></div></div>
-      <div class="stat-chips"><span class="chip">${starsHTML(starsOf(id))}</span><span class="chip">🎚️ Stufe ${levelOf(id)} von 3</span><span class="chip">✏️ ${s.seen} Aufgaben</span>${s.seen ? `<span class="chip">🎯 ${Math.round(s.ok / s.seen * 100)} % richtig</span>` : ''}</div>
+      <div class="stat-chips"><span class="chip">${starsHTML(starsOf(id))}</span><span class="chip">🎚️ Stufe ${levelOf(id)} von 3</span><span class="chip">✏️ ${s.seen} Aufgaben</span>${s.m >= 75 && (s.run || 0) < RUN_NEED ? `<span class="chip">🔁 für ⭐⭐⭐ noch ${RUN_NEED - (s.run || 0)}× in Folge richtig</span>` : ''}${s.seen ? `<span class="chip">🎯 ${Math.round(s.ok / s.seen * 100)} % richtig</span>` : ''}</div>
       <div class="small" style="font-weight:800;color:var(--muted)">Können: ${s.m} %</div><div class="mbar" style="height:16px"><i style="width:${s.m}%"></i></div>
       <div class="row" style="margin-top:22px"><button class="btn ${s.lesson ? 'ghost' : 'blue'} big" onclick="go('lesson','${id}')">📖 Erklärung${s.lesson ? ' nochmal' : ''}</button><button class="btn ${s.lesson ? 'go' : 'ghost'} big" onclick="startTopic('${id}')">✏️ Üben (8 Aufgaben)</button>${t.gen4 ? `<button class="btn big" onclick="startTopic('${id}', 4)">📝 Schularbeits-Niveau</button>` : ''}</div>
       ${S.notes[id] ? `<div class="merke" style="margin-top:18px">So habe ich es erklärt:<br><i>„${esc(S.notes[id])}“</i></div>` : ''}</div>
@@ -3536,9 +3817,10 @@ const VIEWS = {
 
   practice(sess) {
     const it = sess.list[sess.i];
-    const task = it.task || makeTask(it.topic, it.lvl || levelOf(it.topic));
+    const task = it.task || (it.verb ? verbTask(VERB.find(v => v.k === it.verb)) : makeTask(it.topic, it.lvl || levelOf(it.topic)));
     let combo = 0; for (let k = sess.res.length - 1; k >= 0 && sess.res[k].ok && !sess.res[k].tries; k--) combo++;
-    app().innerHTML = `<div class="task-wrap practice-task"><div class="focusbar"><button class="x-btn" onclick="quitPractice(${sess.i})" aria-label="Beenden">✕</button><div class="progress" title="Aufgabe ${sess.i + 1} von ${sess.list.length}"><i style="width:${sess.i / sess.list.length * 100}%"></i></div><div class="combo ${combo ? '' : 'zero'}" title="richtig hintereinander">🔥 ${combo}</div></div><div id="tb"></div></div>`;
+    app().innerHTML = `<div class="task-wrap practice-task"><div class="focusbar"><button class="x-btn" onclick="quitPractice(${sess.i})" aria-label="Beenden">✕</button><div class="progress" title="Aufgabe ${sess.i + 1} von ${sess.list.length}"><i style="width:${sess.i / sess.list.length * 100}%"></i></div><div class="combo ${combo ? '' : 'zero'}" title="richtig hintereinander">🔥 ${combo}</div>${sess.limit ? '<div class="combo" id="clock" title="Zeit">⏱️</div>' : ''}</div><div id="tb"></div></div>`;
+    if (sess.limit) { sess.t0 ||= Date.now(); clearInterval(VIEWS.clockT); const tick = () => { const c = $('#clock'); if (!c) return clearInterval(VIEWS.clockT); const left = sess.limit - Math.round((Date.now() - sess.t0) / 1000); c.textContent = '⏱️ ' + mmss(Math.abs(left)); c.style.color = left < 0 ? 'var(--bad)' : left < 120 ? '#d97e00' : ''; if (left < 0) c.title = 'Zeit ist um – rechne trotzdem fertig!'; }; tick(); VIEWS.clockT = setInterval(tick, 1000); }
     mountTask($('#tb'), task, {
       onResult: r => { const had = dayRec().goal; sess.res.push(Object.assign({ topic: task.topic, fixed: !!task.fromMistake && r.ok }, r)); record(task, r); if (!had && dayRec().goal) sess.goalHit = true; const pi = $('.progress i'); if (pi) pi.style.width = (sess.i + 1) / sess.list.length * 100 + '%'; if (r.ok && !r.tries) { const c = $('.combo'); if (c) { c.classList.remove('zero'); c.textContent = '🔥 ' + (combo + 1); } } },
       onNext: () => { sess.i++; sess.i >= sess.list.length ? go(sess.goalHit ? 'goal' : 'summary', sess) : go('practice', sess); },
@@ -3554,13 +3836,15 @@ const VIEWS = {
     const msg = ratio >= .9 ? 'Unglaublich! Du bist eine echte Mathe-Heldin!' : ratio >= .7 ? 'Richtig stark! Man merkt, dass du übst.' : ratio >= .5 ? 'Gut gemacht! Jeder Fehler hat dir heute etwas beigebracht.' : 'Das war heute schwierig – und du hast trotzdem durchgehalten. Genau so wird man besser! 🌱';
     const byTopic = {}; sess.res.forEach(r => { (byTopic[r.topic] ||= { n: 0, ok: 0 }); byTopic[r.topic].n++; if (r.ok) byTopic[r.topic].ok++; });
     const weak = Object.entries(byTopic).filter(([, v]) => v.ok / v.n < .6).map(([k]) => TOPIC[k]);
+    const used = sess.limit && sess.t0 ? Math.round((Date.now() - sess.t0) / 1000) : 0, slow = sess.res.map((r, i) => [r, i]).sort((x, y) => y[0].sec - x[0].sec).slice(0, 3).filter(([r]) => r.sec > 150);
+    const timeInfo = sess.limit ? `<div class="card" style="text-align:left;margin:14px 0"><h3 style="margin-top:0">⏱️ Zeit: ${mmss(used)} von ${mmss(sess.limit)} ${used <= sess.limit ? '✅' : '🔴'}</h3>${used <= sess.limit ? '<div>Gut eingeteilt – so bleibt bei der Schularbeit Zeit zum Kontrollieren!</div>' : `<div>${mmss(used - sess.limit)} zu lang. Bei der Schularbeit wäre die Zeit knapp geworden.</div>`}${slow.length ? `<div class="small" style="margin-top:8px"><b>Am längsten gedauert:</b> ${slow.map(([r]) => `${TOPIC[r.topic].icon} ${TOPIC[r.topic].title} (${mmss(r.sec)})`).join(' · ')}</div><div class="small muted">Tipp: Wenn du bei einer Aufgabe hängst – weitermachen und am Ende zurückkommen.</div>` : ''}</div>` : '';
     const testInfo = sess.test ? `<div class="card" style="text-align:left;margin:14px 0"><h3>📝 Ergebnis Probe-Test: ${ok} von ${n} Punkten (${Math.round(ratio * 100)} %)</h3>${Object.entries(byTopic).map(([k, v]) => `<div>${TOPIC[k].icon} ${TOPIC[k].title}: <b>${v.ok}/${v.n}</b> ${v.ok === v.n ? '✅' : v.ok / v.n >= .5 ? '🟡' : '🔴'}</div>`).join('')}<p class="small muted">🔴 = hier lohnt sich die Erklärung nochmal · Alle falschen Aufgaben sind jetzt in der Fehler-Kiste.</p></div>` : '';
     const mood = ratio >= .7 ? 'cheer' : ratio >= .5 ? 'happy' : 'comfort';
     app().innerHTML = `<div class="task-wrap center" style="padding-top:10px"><div style="display:flex;justify-content:center">${euli(mood, 150, 'bob')}</div><h1 style="margin-top:8px">${sess.test ? 'Probe-Test fertig!' : 'Geschafft!'}</h1><p style="font-size:20px;font-weight:700;margin-top:0">${msg}</p>
       <div class="result-tiles"><div class="rt" style="--c:#ffc800"><div class="rl">XP</div><div class="rv">⚡ ${xp}</div></div><div class="rt" style="--c:#58cc02"><div class="rl">Richtig</div><div class="rv">🎯 ${ok}/${n}</div></div><div class="rt" style="--c:#1cb0f6"><div class="rl">1. Versuch</div><div class="rv">💪 ${first}</div></div></div>
       ${newBadgesHTML()}
       ${sess.res.some(r => r.fixed) ? `<div class="card" style="margin:0 0 16px;border-color:#b6ec8e;box-shadow:0 4px 0 #b6ec8e;font-weight:800">🧰 Du hast <b>${sess.res.filter(r => r.fixed).length}</b> ${sess.res.filter(r => r.fixed).length === 1 ? 'Fehler' : 'Fehler'} aus der Fehler-Kiste geknackt! 💪</div>` : ''}
-      ${testInfo}
+      ${timeInfo}${testInfo}
       ${weak.length ? `<div class="merke" style="text-align:left">Euli empfiehlt: Schau dir nochmal die Erklärung zu <b>${weak.map(t => t.title).join('</b> und <b>')}</b> an. 📖</div><div class="row" style="justify-content:center;margin-bottom:14px">${weak.slice(0, 2).map(t => `<button class="btn blue" onclick="go('lesson','${t.id}')">${t.icon} ${t.title}</button>`).join('')}</div>` : ''}
       ${!STORAGE_OK && !SAVE_HANDLE ? `<div class="merke" style="text-align:left;border-color:#ffc1c1">Damit dein Fortschritt nicht verloren geht: <div class="row" style="margin-top:6px">${saveFileButtons()}</div></div>` : ''}
       <button class="btn go big wide" style="max-width:420px;margin-top:8px" onclick="go('home')">Weiter</button></div>`;
@@ -3623,6 +3907,14 @@ const VIEWS = {
         ${TOPICS.map(t => { const s = tp(t.id); return `<tr><td>${t.icon} ${t.title}${s.lesson ? ' 📖' : ''}</td><td style="min-width:110px"><div class="mbar"><i style="width:${s.m}%"></i></div><span class="small">${s.m}%</span></td><td>${levelOf(t.id)}</td><td>${s.seen}</td><td>${s.seen ? Math.round(s.ok / s.seen * 100) + '%' : '–'}</td><td>${mByTopic[t.id] || ''}</td><td class="small">${s.last ? new Date(s.last).toLocaleDateString('de-AT') : '–'}</td></tr>`; }).join('')}</table>
         <p class="small muted">📖 = Erklärung angesehen. „Können“ steigt bei richtigen Antworten und sinkt bei Fehlern – so passt sich die Schwierigkeit automatisch an.</p></div>
       ${Object.keys(S.notes).length ? `<h2>💭 Eigene Erklärungen Ihres Kindes</h2><div class="card">${Object.entries(S.notes).map(([k, v]) => `<p><b>${TOPIC[k]?.title}:</b> <i>„${esc(v)}“</i></p>`).join('')}<p class="small muted">Tipp: Lassen Sie sich das Thema von Ihrem Kind erklären und fragen Sie neugierig nach („Und warum ist das so?“).</p></div>` : ''}
+      <h2>📝 1. Schularbeit (13.11.2026): 28 von 48 Punkten – Genügend</h2><div class="card small"><p style="margin-top:0"><b>Volle Punkte:</b> Primzahlen erklären, Teilbarkeitszeichen | und ∤, fehlende Ziffer ergänzen, Zahlen ordnen, Temperatur-Textaufgabe, Scheitelwinkel, Quadranten.</p>
+        <p><b>Punkte verloren – jede dieser Aufgaben gibt es jetzt unter „🔧 Schularbeit verbessern“ auf der Startseite, mit neuen Zahlen:</b></p><ul style="margin:0;padding-left:22px">
+        <li><b>Winkel im Dreieck</b> (−5): ∢YXZ beim falschen Eckpunkt eingezeichnet (der <i>mittlere</i> Buchstabe ist der Scheitel), Messwerte ungenau</li>
+        <li><b>Teilermengen / ggT, kgV großer Zahlen</b> (−4): T₈₀ unvollständig; bei 48 und 72 mit langen Teilerlisten nicht fertig geworden → jetzt Primfaktor-Methode</li>
+        <li><b>Verschiedene Vorzeichen</b> (−3): −65 + 91 = 156, −123 + 16 = −7, ☐ − 52 = −93 → 145</li>
+        <li><b>Zahlengerade mit Schrittweite 3</b> (≈ −3): in Einerschritten abgelesen</li>
+        <li><b>Punkte auf den Achsen</b> (−2), <b>Nebenwinkel</b> 180° − 122° (−1), <b>Einheit</b> „20 Tage“ statt Wochen (−1), „0 ist positiv“ (−1)</li></ul>
+        <p style="margin-bottom:0"><b>Zeit</b> war knapp → Probe-Schularbeit jetzt mit Stoppuhr (jedes Wochenende im Plan). Außerdem gibt es ⭐⭐⭐ erst, wenn ein Thema ${RUN_NEED}-mal hintereinander beim ersten Versuch sitzt. <b>2. Schularbeit: 11.01.2027</b> – Stoff vorläufig: Symmetrie/Streckensymmetrale (H3, gerade in der Schule) und der Stoff der 1. Schularbeit. Bitte unten anpassen, sobald er bekannt ist.</p></div>
       <h2>🔎 Beobachtungen aus Heft & Stundenwiederholung (Okt. 2026)</h2><div class="card small"><p style="margin-top:0"><b>Stärken:</b> ggT/kgV inklusive Textaufgaben, Teilbarkeitsregeln, Primzahlen & Primfaktorzerlegung, Ordnen ganzer Zahlen, schriftliches Rechnen, sorgfältige Heftführung.</p>
         <p><b>Wiederkehrende Fehler – darauf übt die App jetzt gezielt:</b></p><ul style="margin:0;padding-left:22px">
         <li><b>Teilermengen unvollständig</b> (z. B. T₄₂ ohne 3 und 14) → Methode „Teilerpaare“, eigene Eingabe der ganzen Teilermenge mit Rückmeldung, wie viele Teiler fehlen.</li>
@@ -3680,7 +3972,21 @@ function startDaily() { go('practice', { mode: 'daily', list: buildDaily(), i: 0
 function startTest() {
   const ids = (S.settings.focus.length ? S.settings.focus : BOOK.defaultFocus).filter(id => TOPIC[id]);
   const list = Array.from({ length: 10 }, (_, i) => ({ topic: ids[i % ids.length] }));
-  go('practice', { mode: 'test', test: true, list: shuffle(list), i: 0, res: [] });
+  go('practice', { mode: 'test', test: true, limit: 10 * 100, list: shuffle(list), i: 0, res: [] });
+}
+const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const verbOpen = () => VERB.filter(v => !(S.verbDone || []).includes(v.k));
+function startVerb() {
+  let open = shuffle(verbOpen()); if (!open.length) open = shuffle(VERB).slice(0, 6);
+  while (open.length < 8) open = open.concat(shuffle(open)).slice(0, 8);
+  go('practice', { mode: 'verb', list: open.map(v => ({ topic: v.topic, verb: v.k })), i: 0, res: [] });
+}
+function verbCard() {
+  const done = VERB.length - verbOpen().length, all = !verbOpen().length;
+  return `<div class="card" style="margin-bottom:18px;border-color:${all ? '#86efac' : '#ffc1c1'};box-shadow:0 4px 0 ${all ? '#b6ec8e' : '#ffd6d6'}"><div class="row" style="flex-wrap:nowrap;align-items:center"><div style="font-size:44px">${all ? '🏅' : '🔧'}</div><div style="flex:1;min-width:0">
+    <div class="small" style="font-weight:900;color:var(--bad);text-transform:uppercase;letter-spacing:.5px">1. Schularbeit verbessern</div><h3 style="margin:2px 0 4px">${all ? 'Alle Fehler ausgebügelt! 🎉' : `${done} von ${VERB.length} Fehlern ausgebügelt`}</h3>
+    <div class="mbar" style="height:12px"><i style="width:${done / VERB.length * 100}%"></i></div><div class="muted small">Jede Aufgabe, bei der du Punkte verloren hast – mit neuen Zahlen. Ausgebügelt ist sie, wenn sie ${VERB_NEED}-mal hintereinander beim 1. Versuch sitzt.</div></div></div>
+    <button class="btn ${all ? 'ghost' : 'go'}" style="margin-top:12px" onclick="startVerb()">${all ? '🔁 Nochmal wiederholen' : '🔧 Weiter verbessern'}</button></div>`;
 }
 function startTopic(id, lvl) { go('practice', { mode: 'topic', topicId: id, list: Array.from({ length: 8 }, () => ({ topic: id, lvl })), i: 0, res: [] }); }
 function startMistakes() {
