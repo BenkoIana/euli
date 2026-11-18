@@ -3079,11 +3079,88 @@ BOOK.examVer = 3;
 BOOK.defaultFocus = ['symmetrie', 'ganzrech', 'ganz', 'teilbar', 'ggtkgv', 'winkel', 'koordinaten'];
 BOOK.focusVer = 4;
 BOOK.boost = { symmetrie: 1.5, ganzrech: 1.6, teilbar: 1.6, ggtkgv: 1.4, ganz: 1.4, winkel: 1.3, koordinaten: 1.2 };
+
+/* ---------- Streckensymmetrale selbst konstruieren (Zirkel per Regler, Bögen, Schnittpunkte antippen) ---------- */
+function mountConstruct(el, { ab = 6, explore = false, onChange = () => { } } = {}) {
+  const W = 340, H = 340, s = 200 / ab, th = (rnd(-30, 30) || 12) * Math.PI / 180, C = [170, 170];
+  const A = [C[0] - 100 * Math.cos(th), C[1] - 100 * Math.sin(th)], B = [C[0] + 100 * Math.cos(th), C[1] + 100 * Math.sin(th)];
+  const st = { r: Math.round(ab * 0.35 * 10) / 10, arcs: [], picks: [], done: false, locked: false };
+  const rMin = Math.round(ab * 0.25 * 10) / 10, rMax = Math.round(ab * 0.95 * 10) / 10, half = ab / 2;
+  const inter = r => { const R = r * s; if (R <= 100) return []; const h = Math.sqrt(R * R - 100 * 100), n = [-Math.sin(th), Math.cos(th)]; return [[C[0] + n[0] * h, C[1] + n[1] * h], [C[0] - n[0] * h, C[1] - n[1] * h]]; };
+  const arcPath = (P, Q, r) => { const R = r * s, base = Math.atan2(Q[1] - P[1], Q[0] - P[0]), sp = R > 100 ? Math.acos(100 / R) + 0.35 : 0.9;
+    const p1 = [P[0] + R * Math.cos(base - sp), P[1] + R * Math.sin(base - sp)], p2 = [P[0] + R * Math.cos(base + sp), P[1] + R * Math.sin(base + sp)];
+    return `M${p1[0].toFixed(1)},${p1[1].toFixed(1)} A${R.toFixed(1)},${R.toFixed(1)} 0 ${2 * sp > Math.PI ? 1 : 0} 1 ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; };
+  const step = () => !st.arcs.some(a => a.c === 'A') || !st.arcs.some(a => a.c === 'B') ? 2 : st.picks.length < 2 ? 3 : 4;
+  const sameR = () => st.arcs.length === 2 && st.arcs[0].r === st.arcs[1].r;
+  const svg = () => {
+    let g = `<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" stroke="#1c5fb8" stroke-width="3.5"/>`;
+    st.arcs.forEach(a => g += `<path d="${arcPath(a.c === 'A' ? A : B, a.c === 'A' ? B : A, a.r)}" fill="none" stroke="#ff9600" stroke-width="2.5"/>`);
+    if (!st.locked && step() === 2) [A, B].forEach(P => g += `<circle cx="${P[0]}" cy="${P[1]}" r="${st.r * s}" fill="none" stroke="#ff9600" stroke-opacity=".25" stroke-dasharray="4 5"/>`);
+    if (st.done) { const [P, Q] = st.picks, d = [Q[0] - P[0], Q[1] - P[1]], l = Math.hypot(...d), e = [d[0] / l, d[1] / l], u = [Math.cos(th), Math.sin(th)];
+      g += `<line x1="${P[0] - e[0] * 40}" y1="${P[1] - e[1] * 40}" x2="${Q[0] + e[0] * 40}" y2="${Q[1] + e[1] * 40}" stroke="#e5484d" stroke-width="2.5" stroke-dasharray="12 4 2 4"/>
+        <path d="M${C[0] + u[0] * 14},${C[1] + u[1] * 14} l${-e[0] * 14 * Math.sign(e[1] || 1)},${-e[1] * 14 * Math.sign(e[1] || 1)} l${-u[0] * 14},${-u[1] * 14}" fill="none" stroke="#e5484d" stroke-width="1.8"/>
+        <text x="${(e[1] > 0 ? Q : P)[0] + 10}" y="${(e[1] > 0 ? Q : P)[1] + 26}" font-size="17" font-weight="900" fill="#e5484d">s<tspan font-size="12" dy="4">AB</tspan></text>`; }
+    st.picks.forEach(p => g += `<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#e5484d"/>`);
+    g += `<circle cx="${A[0]}" cy="${A[1]}" r="5" fill="#1c5fb8"/><circle cx="${B[0]}" cy="${B[1]}" r="5" fill="#1c5fb8"/><text x="${A[0] - 24}" y="${A[1] + 6}" font-size="20" font-weight="900">A</text><text x="${B[0] + 10}" y="${B[1] + 6}" font-size="20" font-weight="900">B</text>`;
+    return `<svg data-cs width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;touch-action:manipulation;cursor:crosshair">${g}</svg>`;
+  };
+  const say = () => {
+    const k = step(), it = inter(st.r);
+    if (st.done) return '✅ <b>Fertig!</b> Die Streckensymmetrale s<sub>AB</sub> steht <b>normal</b> auf AB und halbiert die Strecke.';
+    if (k === 2) return `<b>Schritt 2:</b> Stell den Zirkel ein und zeichne um <b>A</b> und um <b>B</b> je einen Kreisbogen – mit <b>gleichem</b> Radius.`;
+    if (!sameR()) return '⚠️ Die zwei Kreisbögen haben <b>verschiedene</b> Radien! Tippe auf „Nochmal“ und zeichne beide mit derselben Zirkel-Öffnung.';
+    if (!inter(st.arcs[0].r).length) return `⚠️ Die Kreisbögen <b>schneiden sich nicht</b>! Der Radius muss größer sein als die Hälfte von AB (${fmt(half)} cm). Tippe auf „Nochmal“.`;
+    return `<b>Schritt 3:</b> Tippe auf die <b>${st.picks.length ? 'zweite' : 'beiden'} Schnittpunkte</b> der Kreisbögen.`;
+  };
+  const draw = () => {
+    el.innerHTML = `<div class="small" style="margin-bottom:6px">AB = <b>${fmt(ab)} cm</b> · <span class="muted">Schritt 1 (Strecke AB) ist schon gezeichnet</span></div>${svg()}
+      <div class="cs-msg" style="margin:8px 0;font-size:17px">${say()}</div>
+      ${st.locked ? '' : `<div class="ctrl" style="display:flex;justify-content:center;margin:6px 0"><label style="font-weight:800;display:flex;flex-direction:column;align-items:center">Zirkel öffnen: r = <span data-rv>${fmt(st.r)} cm</span><input type="range" data-r min="${rMin}" max="${rMax}" step="0.1" value="${st.r}" style="width:240px;accent-color:#ff9600" ${step() === 2 ? '' : 'disabled'}></label></div>
+      <div class="row" style="justify-content:center">${step() === 2 ? ['A', 'B'].map(c => `<button type="button" class="btn${st.arcs.some(a => a.c === c) ? ' ghost' : ''}" data-arc="${c}" ${st.arcs.some(a => a.c === c) ? 'disabled' : ''}>Kreisbogen um ${c}</button>`).join('') : ''}${st.arcs.length ? '<button type="button" class="btn ghost" data-reset>↺ Nochmal</button>' : ''}</div>`}`;
+    const rr = $('[data-r]', el); if (rr) rr.oninput = () => { st.r = +rr.value; $('[data-rv]', el).textContent = fmt(st.r) + ' cm'; const sv = $('[data-cs]', el); sv.outerHTML = svg(); bindTap(); };
+    $$('[data-arc]', el).forEach(b => b.onclick = () => { st.arcs.push({ c: b.dataset.arc, r: st.r }); buzz(15); draw(); onChange(st); });
+    const rs = $('[data-reset]', el); if (rs) rs.onclick = () => { st.arcs = []; st.picks = []; st.done = false; draw(); onChange(st); };
+    bindTap();
+  };
+  const bindTap = () => { const sv = $('[data-cs]', el); if (!sv) return; sv.onclick = e => {
+    if (st.locked || step() !== 3 || !sameR()) return; const its = inter(st.arcs[0].r); if (!its.length) return;
+    const b = sv.getBoundingClientRect(), x = (e.clientX - b.left) * W / b.width, y = (e.clientY - b.top) * H / b.height;
+    const hit = its.find(p => Math.hypot(p[0] - x, p[1] - y) < 26 && !st.picks.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 5));
+    if (!hit) { toast('Tippe genau auf einen Punkt, wo sich die beiden Kreisbögen <b>schneiden</b> 🎯'); return; }
+    st.picks.push(hit); buzz(20); if (st.picks.length === 2) st.done = true; draw(); onChange(st);
+  }; };
+  draw();
+  return { st, ab, half, sameR, inter, lock() { st.locked = true; draw(); }, solve() { const r = Math.round(ab * 0.75 * 10) / 10; st.arcs = [{ c: 'A', r }, { c: 'B', r }]; st.picks = inter(r); st.done = true; st.locked = true; draw(); } };
+}
+WIDGETS.construct = el => mountConstruct(el, { ab: 6, explore: true });
+function constructTask() {
+  const ab = pick([5, 5.5, 6, 6.5, 7, 7.5, 8]); let api = null;
+  return T({ type: 'custom', q: `Konstruiere die <b>Streckensymmetrale</b> der Strecke AB mit dem Zirkel.`, answer: 'konstruiert', answerText: `Radius größer als ${fmt(ab / 2)} cm (z. B. ¾ · ${fmt(ab)} cm ≈ ${fmt(Math.round(ab * 7.5) / 10)} cm), gleich bei A und B, Schnittpunkte verbunden`, noMistake: true,
+    mount(el, changed) { api = mountConstruct(el, { ab, onChange: changed || (() => { }) }); },
+    check() {
+      const { st } = api;
+      if (st.arcs.length < 2) return { empty: true, msg: 'Zeichne zuerst die Kreisbögen um A und um B ⭕' };
+      if (!api.sameR()) return { ok: false, trap: { msg: 'Die Kreisbögen um A und B brauchen den GLEICHEN Radius – den Zirkel zwischendurch nicht verstellen!' } };
+      if (!api.inter(st.arcs[0].r).length) return { ok: false, trap: { msg: `Mit r = ${fmt(st.arcs[0].r)} cm schneiden sich die Bögen nicht. Der Radius muss größer sein als die Hälfte von AB (${fmt(ab / 2)} cm).` } };
+      if (st.picks.length < 2) return { empty: true, msg: 'Tippe noch auf die beiden Schnittpunkte der Kreisbögen 🎯' };
+      return { ok: true };
+    },
+    reveal(ok) { if (ok) api.lock(); else api.solve(); },
+    retry() { /* nach einem Fehlversuch: Nochmal-Knopf ist sichtbar */ },
+    hints: [`Der Radius muss größer sein als die Hälfte von AB, also mehr als ${fmt(ab / 2)} cm. Tipp aus dem Buch: etwa ¾ von AB.`, 'Erst den Regler einstellen, dann BEIDE Bögen zeichnen – ohne den Zirkel zu verstellen. Danach auf die zwei Schnittpunkte tippen.'],
+    steps: ['1. Strecke AB zeichnen', `2. Zirkel auf etwa ¾ von AB öffnen (≈ ${fmt(Math.round(ab * 7.5) / 10)} cm) und um A und B je einen Kreisbogen zeichnen`, '3. Die beiden Schnittpunkte strichpunktiert verbinden und mit s<sub>AB</sub> beschriften'] });
+}
+{
+  const t = TOPIC.symmetrie, i = t.lesson.findIndex(l => /konstruieren/.test(l.h));
+  if (i >= 0) t.lesson.splice(i + 1, 0, { h: 'Probier es selbst!', html: '<p>Öffne den Zirkel mit dem Regler und zeichne die Kreisbögen. Was passiert, wenn der Radius zu klein ist?</p>', widget: 'construct' });
+  const old = t.gen; t.gen = L => (L >= 2 && Math.random() < 0.25 ? constructTask() : old(L));
+  gen4('symmetrie', [constructTask]);
+}
 </script>
 <script>
 /* ===== Mathe mit Euli – App-Logik ===== */
 const KEY = 'matheLehrer.v1';
-const APP_VER = '18.11.2026 19:32';
+const APP_VER = '18.11.2026 19:59';
 const AVATARS = ['🦊', '🐱', '🐼', '🦄', '🐰', '🐯', '🐸', '🐨', '🦋', '🐬', '🌸', '⭐'];
 const TITLES = ['Zahlen-Entdeckerin', 'Rechen-Lehrling', 'Bruch-Bändigerin', 'Mathe-Detektivin', 'Formel-Forscherin', 'Gleichungs-Heldin', 'Geometrie-Genie', 'Mathe-Profi', 'Mathe-Meisterin', 'Mathe-Legende'];
 const PRAISE = ['Super gemacht! 🌟', 'Richtig! Du bist spitze! 🎉', 'Genau so! 💪', 'Perfekt! ✨', 'Klasse, das sitzt! 🙌', 'Wow, richtig! 🚀', 'Bravo! 🦉', 'Toll gerechnet! 🧠'];
@@ -3413,6 +3490,7 @@ function go(view, ...args) {
 
 /* ---------- Aufgaben-Komponente ---------- */
 function answerHTML(t) {
+  if (t.type === 'custom') return '<div data-custom style="width:100%;text-align:center"></div>';
   if (t.type === 'multi') return `<div class="choices multi">${t.choices.map(c => `<button class="choice mopt" data-m="${esc(c)}">${c}</button>`).join('')}</div><div class="small muted" style="width:100%;text-align:center">Es können mehrere Antworten richtig sein.</div>`;
   if (t.type === 'choice') return `<div class="choices">${t.choices.map(c => `<button class="choice" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
   if (t.type === 'prod') return `<span>${t.pre} =</span><input class="ans" data-p autocomplete="off" style="width:min(300px,58vw);text-align:left" aria-label="Faktoren mit Malpunkt getrennt">`;
@@ -3426,12 +3504,13 @@ const fmtS = x => x < 0 ? '−' + fmt(-x) : fmt(x);
 const answerText = t => t.type === 'frac' ? FA(t.answer) : t.type === 'num' ? `${t.pre ? t.pre + ' ' : ''}${fmtS(t.answer)} ${t.unit || ''}`
   : t.type === 'set' ? (t.ordered ? t.answer.map(fmtS).join(' &lt; ') : `{${t.answer.map(fmtS).join(', ')}${t.setPost ? ', …' : ''}}`)
   : t.type === 'prod' ? `${t.pre} = ${t.answer.join(' · ')}`
-  : t.type === 'multi' ? t.answer.join(' &nbsp;·&nbsp; ')
+  : t.type === 'multi' ? t.answer.join(' &nbsp;·&nbsp; ') : t.type === 'custom' ? t.answerText
   : t.type === 'point' || t.type === 'grid' ? pt(...t.answer) : t.type === 'line' ? (t.answerHTML || fmtS(t.answer)) : esc(t.answer);
 const SWAP = 'Vertauscht! Zuerst kommt x (nach rechts/links), dann y (nach oben/unten).';
 
 function evaluate(t, box, picked) {
   if (t.type === 'choice') return { ok: picked === t.answer, trap: t.traps.find(x => x.v === picked) };
+  if (t.type === 'custom') return t.check();
   if (t.type === 'multi') {
     const on = $$('.mopt.on', box).map(b => b.dataset.m); if (!on.length) return { empty: true, msg: 'Tippe zuerst die richtigen Aussagen an ✔️' };
     const miss = t.answer.filter(a => !on.includes(a)).length, wrong = on.filter(a => !t.answer.includes(a)).length;
@@ -3534,6 +3613,7 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
       act.dispatchEvent(new Event('input', { bubbles: true })); act.focus();
     });
   }
+  if (t.type === 'custom') t.mount($('[data-custom]', box), () => { if (!done) { fb.className = 'fb hidden'; state(''); } });
   let sel = null; const pickBox = $('[data-pick]', box);
   const drawPick = (extra = {}) => { if (pickBox) pickBox.innerHTML = t.type === 'grid' ? svgCoord(Object.assign({}, t.grid, { sel }, extra)) : svgNumLine(Object.assign({}, t.line, { sel }, extra)); };
   if (pickBox) { drawPick(); pickBox.addEventListener('click', e => { if (done) return; const svg = $('svg', pickBox); if (!svg) return; sel = svgPick(e, svg); drawPick(); }); }
@@ -3548,6 +3628,7 @@ function mountTask(box, t, { onResult, onNext, nextLabel = 'Weiter ➜', test = 
     const xp = ok ? (tries === 0 ? (hints ? 6 : 10) : 4) : 1;
     inputs.forEach(i => i.disabled = true); $$('.choice', box).forEach(b => b.disabled = true); kp?.remove();
     if (pickBox) drawPick({ good: t.answer });
+    if (t.type === 'custom' && t.reveal) t.reveal(ok);
     if (t.type === 'multi') $$('.mopt', box).forEach(b => { const right = t.answer.includes(b.dataset.m); if (right) b.classList.add('picked-ok'); else if (b.classList.contains('on')) b.classList.add('picked-bad'); });
     $('[data-acts]', box).innerHTML = `<button class="btn go big wide" data-next>${nextLabel}</button>`;
     $('[data-next]', box).onclick = () => onNext && onNext();
@@ -3614,7 +3695,7 @@ function record(t, r) {
     if (S.verb[t.verb] >= VERB_NEED && !(S.verbDone || []).includes(t.verb)) { S.verbDone = [...(S.verbDone || []), t.verb]; setTimeout(() => toast(`🔧 Ausgebügelt: <b>${VERB.find(v => v.k === t.verb).name}</b> sitzt jetzt!`, 3500), 700); } }
   const d = dayRec(); d.n++; if (r.ok) d.ok++; if (r.ok && r.tries === 0) d.ok1++; d.sec += Math.min(r.sec, 180);
   S.total++; S.xp += r.xp;
-  if (!r.ok && !t.fromMistake) {
+  if (!r.ok && !t.fromMistake && !t.noMistake) {
     const m = Object.assign({}, t, { mid: Date.now() + '' + rnd(0, 999), date: today(), fromMistake: true });
     S.mistakes.push(m); if (S.mistakes.length > 40) S.mistakes.shift();
   }
